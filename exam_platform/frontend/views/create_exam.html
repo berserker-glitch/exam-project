@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Exam - EC</title>
+    <link rel="stylesheet" href="../public/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="create-exam-container">
+        <!-- Header with navigation -->
+        <header class="exam-header">
+            <h1><i class="fas fa-edit"></i> Create New Exam</h1>
+            <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </header>
+
+        <!-- Main exam form -->
+        <form id="examForm" class="exam-form">
+            <!-- Basic Exam Information -->
+            <section class="form-section">
+                <h2>Basic Information</h2>
+                <div class="form-group">
+                    <label for="examTitle">Title*</label>
+                    <input type="text" id="examTitle" name="examTitle" required placeholder="Enter exam title">
+                </div>
+                <div class="form-group">
+                    <label for="examDescription">Description</label>
+                    <textarea id="examDescription" name="examDescription" rows="3" placeholder="Enter exam description"></textarea>
+                </div>
+            </section>
+
+            <!-- Target Audience -->
+            <section class="form-section">
+                <h2>Target Audience</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="targetYear">Year*</label>
+                        <select id="targetYear" name="targetYear" required>
+                            <option value="">Select year</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetSemester">Semester*</label>
+                        <select id="targetSemester" name="targetSemester" required>
+                            <option value="">Select semester</option>
+                            <option value="S1">S1</option>
+                            <option value="S2">S2</option>
+                            <option value="S3">S3</option>
+                            <option value="S4">S4</option>
+                            <option value="S5">S5</option>
+                            <option value="S6">S6</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetGroup">Group</label>
+                        <input type="text" id="targetGroup" name="targetGroup" placeholder="e.g., Group A">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Questions Section -->
+            <section class="form-section">
+                <h2>Questions</h2>
+                <div id="questionsList">
+                    <!-- Questions will be added here dynamically -->
+                </div>
+                
+                <!-- Add Question Button -->
+                <div class="add-question-container">
+                    <button type="button" class="btn add-question-btn" onclick="showQuestionTypeModal()">
+                        <i class="fas fa-plus"></i> Add Question
+                    </button>
+                </div>
+            </section>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" class="btn submit-btn">Create Exam</button>
+                <button type="button" class="btn preview-btn" onclick="previewExam()">Preview</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Question Type Modal -->
+    <div id="questionTypeModal" class="modal">
+        <div class="modal-content">
+            <h2>Select Question Type</h2>
+            <div class="question-type-options">
+                <button class="btn question-type-btn" onclick="addQuestion('direct')">
+                    <i class="fas fa-pen"></i>
+                    <span>Direct Question</span>
+                    <small>Student types the answer directly</small>
+                </button>
+                <button class="btn question-type-btn" onclick="addQuestion('mcq')">
+                    <i class="fas fa-list"></i>
+                    <span>Multiple Choice</span>
+                    <small>Student selects from options</small>
+                </button>
+            </div>
+            <button class="btn close-modal-btn" onclick="closeQuestionTypeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Question Template (Hidden) -->
+    <template id="directQuestionTemplate">
+        <div class="question-card" data-question-id="QUESTION_ID">
+            <div class="question-header">
+                <h3>Question QUESTION_NUMBER</h3>
+                <div class="question-actions">
+                    <button type="button" class="btn edit-btn" onclick="editQuestion(QUESTION_ID)">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn delete-btn" onclick="deleteQuestion(QUESTION_ID)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="question-content">
+                <div class="form-group">
+                    <label>Question Text*</label>
+                    <textarea class="question-text" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Attachments</label>
+                    <div class="attachment-controls">
+                        <button type="button" class="btn attachment-btn" onclick="addAttachment(QUESTION_ID, 'image')">
+                            <i class="fas fa-image"></i> Image
+                        </button>
+                        <button type="button" class="btn attachment-btn" onclick="addAttachment(QUESTION_ID, 'audio')">
+                            <i class="fas fa-music"></i> Audio
+                        </button>
+                        <button type="button" class="btn attachment-btn" onclick="addAttachment(QUESTION_ID, 'video')">
+                            <i class="fas fa-video"></i> Video
+                        </button>
+                    </div>
+                    <div class="attachment-preview"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Correct Answer*</label>
+                        <input type="text" class="correct-answer" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tolerance (%)</label>
+                        <input type="number" class="tolerance" min="0" max="100" value="10">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Points*</label>
+                        <input type="number" class="points" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time Limit (seconds)*</label>
+                        <input type="number" class="time-limit" min="30" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="mcqQuestionTemplate">
+        <div class="question-card" data-question-id="QUESTION_ID">
+            <div class="question-header">
+                <h3>Question QUESTION_NUMBER</h3>
+                <div class="question-actions">
+                    <button type="button" class="btn edit-btn" onclick="editQuestion(QUESTION_ID)">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn delete-btn" onclick="deleteQuestion(QUESTION_ID)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="question-content">
+                <div class="form-group">
+                    <label>Question Text*</label>
+                    <textarea class="question-text" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Attachments</label>
+                    <div class="attachment-controls">
+                        <button type="button" class="btn attachment-btn" onclick="addAttachment(QUESTION_ID, 'image')">
+                            <i class="fas fa-image"></i> Image
+                        </button>
+                        <button type="button" class="btn attachment-btn" onclick="addAttachment(QUESTION_ID, 'audio')">
+                            <i class="fas fa-music"></i> Audio
+                        </button>
+                        <button type="button" class="btn attachment-btn" onclick="addAttachment(QUESTION_ID, 'video')">
+                            <i class="fas fa-video"></i> Video
+                        </button>
+                    </div>
+                    <div class="attachment-preview"></div>
+                </div>
+                <div class="form-group">
+                    <label>Options*</label>
+                    <div class="mcq-options">
+                        <div class="mcq-option">
+                            <input type="checkbox" class="option-correct">
+                            <input type="text" class="option-text" placeholder="Enter option">
+                            <button type="button" class="btn remove-option-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn add-option-btn" onclick="addMCQOption(QUESTION_ID)">
+                        <i class="fas fa-plus"></i> Add Option
+                    </button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Points*</label>
+                        <input type="number" class="points" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time Limit (seconds)*</label>
+                        <input type="number" class="time-limit" min="30" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="../public/js/create_exam.js"></script>
+</body>
+</html>

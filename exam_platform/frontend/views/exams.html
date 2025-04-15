@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exams - EC</title>
+    <link rel="stylesheet" href="../public/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="exams-container">
+        <!-- Header with navigation -->
+        <header class="exams-header">
+            <h1><i class="fas fa-book"></i> Exams</h1>
+            <div class="header-actions">
+                <a href="create_exam.html" class="btn create-btn">
+                    <i class="fas fa-plus"></i> Create New Exam
+                </a>
+                <a href="dashboard.html" class="btn back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </header>
+
+        <!-- Filters Section -->
+        <section class="filters-section">
+            <div class="filter-group">
+                <select id="yearFilter">
+                    <option value="">All Years</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                </select>
+                <select id="semesterFilter">
+                    <option value="">All Semesters</option>
+                    <option value="S1">S1</option>
+                    <option value="S2">S2</option>
+                    <option value="S3">S3</option>
+                    <option value="S4">S4</option>
+                    <option value="S5">S5</option>
+                    <option value="S6">S6</option>
+                </select>
+                <input type="text" id="groupFilter" placeholder="Filter by group...">
+                <button class="btn apply-filters-btn" onclick="applyFilters()">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+        </section>
+
+        <!-- Exams List -->
+        <section class="exams-list">
+            <!-- Loading spinner -->
+            <div id="loadingSpinner" class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading exams...
+            </div>
+
+            <!-- Exams will be inserted here -->
+            <div id="examsList"></div>
+
+            <!-- No exams message -->
+            <div id="noExamsMessage" class="no-exams-message" style="display: none;">
+                <i class="fas fa-info-circle"></i>
+                <p>No exams found. Create your first exam!</p>
+                <a href="create_exam.html" class="btn create-btn">Create Exam</a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Exam Template -->
+    <template id="examTemplate">
+        <div class="exam-card">
+            <div class="exam-header">
+                <h2 class="exam-title"></h2>
+                <div class="exam-meta">
+                    <span class="year-badge"></span>
+                    <span class="semester-badge"></span>
+                    <span class="group-badge"></span>
+                </div>
+            </div>
+            <p class="exam-description"></p>
+            <div class="exam-stats">
+                <span class="question-count">
+                    <i class="fas fa-question-circle"></i>
+                    <span class="count"></span> Questions
+                </span>
+                <span class="created-date">
+                    <i class="fas fa-calendar"></i>
+                    Created: <span class="date"></span>
+                </span>
+            </div>
+            <div class="exam-actions">
+                <button class="btn view-btn" onclick="viewExam(this.dataset.examId)">
+                    <i class="fas fa-eye"></i> View
+                </button>
+                <button class="btn edit-btn" onclick="editExam(this.dataset.examId)">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn delete-btn" onclick="deleteExam(this.dataset.examId)">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <script src="../public/js/exams.js"></script>
+</body>
+</html>

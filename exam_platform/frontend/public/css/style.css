@@ -1,0 +1,1130 @@
+/**
+ * Exam Platform Main Stylesheet
+ * 
+ * This stylesheet contains all the styling for the exam platform, including:
+ * - Modern CSS reset
+ * - Global variables and themes
+ * - Layout components
+ * - Form styling
+ * - Animations
+ * - Responsive design
+ * - Component-specific styles
+ */
+
+/* ========================================
+   Modern CSS Reset
+   - Ensures consistent styling across browsers
+   - Uses border-box for predictable sizing
+   - Removes default margins and padding
+   ======================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ========================================
+   Global Variables & Theme Configuration
+   - Defines color scheme
+   - Sets up typography
+   - Configures spacing and animations
+   - Enables easy theme customization
+   ======================================== */
+:root {
+    /* Color Palette */
+    --primary-color: #4CAF50;      /* Main brand color - Green */
+    --primary-dark: #388E3C;       /* Darker shade for hover states */
+    --primary-light: #81C784;      /* Lighter shade for backgrounds */
+    --secondary-color: #2196F3;    /* Secondary actions - Blue */
+    
+    /* Status Colors */
+    --error-color: #f44336;        /* Error states - Red */
+    --success-color: #4CAF50;      /* Success states - Green */
+    --warning-color: #ff9800;      /* Warning states - Orange */
+    
+    /* Text Colors */
+    --text-primary: #333;          /* Main text color */
+    --text-secondary: #666;        /* Secondary text color */
+    
+    /* Background Colors */
+    --background-primary: #fff;     /* Main background */
+    --background-secondary: #f5f5f5; /* Secondary background */
+    
+    /* Effects */
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --animation-speed: 0.3s;        /* Standard transition time */
+}
+
+/* ========================================
+   Base Layout & Typography
+   - Sets up basic page structure
+   - Configures default font settings
+   - Establishes responsive container
+   ======================================== */
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* ========================================
+   Authentication Components
+   - Login/Signup container styling
+   - Form layout and spacing
+   - Welcome message formatting
+   ======================================== */
+.auth-container {
+    background: var(--background-primary);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px var(--shadow-color);
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    overflow: hidden;
+    animation: containerFadeIn 0.5s ease-out;
+    transform-origin: center;
+}
+
+/* Welcome Message Styling */
+.welcome-message {
+    text-align: center;
+    margin-bottom: 2rem;
+    animation: slideDown 0.5s ease-out;
+}
+
+.welcome-message h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.welcome-message p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* ========================================
+   Form Components
+   - Input fields
+   - Labels
+   - Form groups
+   - Validation states
+   ======================================== */
+.form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+    animation: slideUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    transform-origin: left;
+    transition: all var(--animation-speed) ease;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all var(--animation-speed) ease;
+    background: var(--background-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    outline: none;
+}
+
+/* ========================================
+   Password Components
+   - Password input container
+   - Toggle password visibility
+   - Password requirements list
+   ======================================== */
+.password-input-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: var(--text-secondary);
+    transition: all var(--animation-speed) ease;
+}
+
+.toggle-password:hover {
+    color: var(--primary-color);
+}
+
+/* Password Requirements Display */
+.password-requirements {
+    background: var(--background-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.password-requirements ul {
+    list-style: none;
+    margin-top: 0.5rem;
+}
+
+.password-requirements li {
+    margin: 0.3rem 0;
+    color: var(--text-secondary);
+    transition: all var(--animation-speed) ease;
+    display: flex;
+    align-items: center;
+}
+
+.password-requirements li::before {
+    content: '•';
+    margin-right: 0.5rem;
+    color: currentColor;
+}
+
+/* ========================================
+   Button Styles
+   - Primary buttons
+   - Secondary buttons
+   - Button states (hover, active)
+   - Loading states
+   ======================================== */
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--animation-speed) ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Button Hover Effects */
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease-out, height 0.6s ease-out;
+}
+
+.btn:hover::after {
+    width: 300%;
+    height: 300%;
+}
+
+.login-btn, .signup-btn {
+    background: var(--primary-color);
+    color: white;
+    margin-top: 1rem;
+    animation: scaleIn 0.5s ease-out;
+}
+
+.login-btn:hover, .signup-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+}
+
+/* ========================================
+   Animation Keyframes
+   - Container animations
+   - Slide effects
+   - Fade effects
+   - Loading spinners
+   ======================================== */
+@keyframes containerFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/* ========================================
+   Layout Components
+   - Grid system
+   - Card layouts
+   - Navigation
+   - Sidebar
+   ======================================== */
+.container {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* ========================================
+   Dashboard Components
+   - Dashboard layout
+   - Feature cards
+   - Action buttons
+   - User info display
+   ======================================== */
+.dashboard-container {
+    background: var(--background-primary);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px var(--shadow-color);
+    width: 100%;
+    max-width: 1200px;
+    margin: 2rem auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    animation: containerFadeIn 0.5s ease-out;
+}
+
+/* Card Grid Layout */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+}
+
+.card {
+    background: var(--background-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    transition: transform var(--animation-speed) ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 200px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Form Layout Improvements */
+.form-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    width: 100%;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Two Column Form Layout */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* Center Alignment Improvements */
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1.5rem;
+}
+
+/* Navigation Layout */
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: var(--background-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+/* Table Layout */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin: 2rem 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--background-primary);
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--background-secondary);
+}
+
+/* Button Group Layout */
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin: 1.5rem 0;
+}
+
+/* Improved Auth Container */
+.auth-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: stretch;
+    width: 100%;
+    max-width: 500px;
+    margin: 2rem auto;
+}
+
+/* Sidebar Layout */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 250px;
+    background: var(--background-primary);
+    box-shadow: 2px 0 10px var(--shadow-color);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    z-index: 1000;
+    transform: translateX(0);
+    transition: transform var(--animation-speed) ease;
+}
+
+/* Main Content Layout */
+.main-content {
+    margin-left: 250px;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+/* Modal Layout */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--background-primary);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px var(--shadow-color);
+    max-width: 500px;
+    width: 90%;
+    z-index: 1001;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+}
+
+/* Responsive Layout Adjustments */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .nav-container {
+        padding: 1rem;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .nav-links.active {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--background-primary);
+        padding: 1rem;
+        box-shadow: 0 4px 10px var(--shadow-color);
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Logo Section */
+.logo-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.platform-logo {
+    width: 120px;
+    height: auto;
+    margin: 0 auto;
+}
+
+/* Features Grid */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin: 3rem 0;
+    padding: 0 1rem;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--background-secondary);
+    border-radius: 12px;
+    transition: transform var(--animation-speed) ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    display: inline-block;
+    padding: 1rem;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 50%;
+}
+
+.feature-card h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Welcome Message Improvements */
+.welcome-message {
+    padding: 2rem 0;
+    position: relative;
+}
+
+.welcome-message::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+/* Button Group Improvements */
+.button-group {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.button-group .btn {
+    min-width: 120px;
+    padding: 0.8rem 1.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .button-group .btn {
+        width: 100%;
+    }
+}
+
+/* Feature Icons */
+.exam-icon::before {
+    content: '📝';
+}
+
+.results-icon::before {
+    content: '📊';
+}
+
+.progress-icon::before {
+    content: '📈';
+}
+
+/* Container Improvements */
+.container {
+    min-height: 100vh;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.auth-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+/* Date Input Styling */
+.date-input {
+    cursor: pointer;
+    padding-right: 30px !important;
+}
+
+.date-hint {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+/* Dashboard Improvements */
+.dashboard-header {
+    position: relative;
+    margin-bottom: 3rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--background-secondary);
+}
+
+.logout-link {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: color var(--animation-speed) ease;
+    opacity: 0.7;
+}
+
+.logout-link:hover {
+    color: var(--error-color);
+    opacity: 1;
+}
+
+.action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    background: var(--background-secondary);
+    border-radius: 15px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all var(--animation-speed) ease;
+    text-align: center;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px var(--shadow-color);
+}
+
+.action-card i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 50%;
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--primary-color);
+}
+
+.action-card h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.action-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.create-exam i {
+    background: rgba(33, 150, 243, 0.1);
+    color: var(--secondary-color);
+}
+
+.take-exam i {
+    background: rgba(156, 39, 176, 0.1);
+    color: #9c27b0;
+}
+
+/* User Info Styling */
+.user-info {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.user-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.user-info span {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+/* TODO Page Styling */
+/*this css to be removed after*/
+.todo-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.todo-text {
+    font-size: 3rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.5rem;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+
+/* Exam Creation Styles */
+.create-exam-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.exam-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--background-secondary);
+}
+
+.exam-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--primary-color);
+}
+
+.back-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color var(--animation-speed) ease;
+}
+
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+/* Form Sections */
+.form-section {
+    background: var(--background-primary);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+.form-section h2 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+/* Question Cards */
+.question-card {
+    background: var(--background-secondary);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    transition: all var(--animation-speed) ease;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.question-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.question-actions .btn {
+    padding: 0.5rem;
+    border-radius: 8px;
+    background: var(--background-primary);
+}
+
+.edit-btn {
+    color: var(--secondary-color);
+}
+
+.delete-btn {
+    color: var(--error-color);
+}
+
+/* Attachment Controls */
+.attachment-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.attachment-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--background-primary);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    transition: all var(--animation-speed) ease;
+}
+
+.attachment-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.attachment-preview {
+    min-height: 100px;
+    border: 2px dashed var(--background-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+/* MCQ Options */
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mcq-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--background-primary);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.option-correct {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.option-text {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.remove-option-btn {
+    color: var(--error-color);
+    background: transparent;
+    padding: 0.5rem;
+}
+
+/* Add Question Button */
+.add-question-container {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.add-question-btn {
+    background: var(--background-primary);
+    color: var(--primary-color);
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    transition: all var(--animation-speed) ease;
+}
+
+.add-question-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Question Type Modal */
+.question-type-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.question-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background: var(--background-secondary);
+    border-radius: 12px;
+    transition: all var(--animation-speed) ease;
+}
+
+.question-type-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.question-type-btn i {
+    font-size: 2rem;
+}
+
+.question-type-btn span {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.question-type-btn small {
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.question-type-btn:hover small {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.submit-btn {
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem 2rem;
+}
+
+.preview-btn {
+    background: var(--secondary-color);
+    color: white;
+    padding: 1rem 2rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .create-exam-container {
+        padding: 1rem;
+    }
+
+    .form-section {
+        padding: 1.5rem;
+    }
+
+    .question-card {
+        padding: 1.5rem;
+    }
+
+    .attachment-controls {
+        flex-wrap: wrap;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+
+/* ========================================
+   Accessibility & Focus States
+   - Focus indicators
+   - Screen reader utilities
+   - Keyboard navigation
+   ======================================== */
+:focus {
+    outline: none;
+    transition: all var(--animation-speed) ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Selection Styling */
+::selection {
+    background: var(--primary-light);
+    color: white;
+}

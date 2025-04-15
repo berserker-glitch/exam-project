@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EC</title>
+    <link rel="stylesheet" href="../public/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome, <span id="userName">User</span></h1>
+            <p>Your Study Progress</p>
+            <a href="#" onclick="logout()" class="logout-link">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+        
+        <div class="dashboard-content">
+            <div class="user-info">
+                <p>Field: <span id="userField"></span></p>
+                <p>Semester: <span id="userYear"></span></p>
+            </div>
+
+            <div class="action-cards">
+                <a href="create_exam.html" class="action-card create-exam">
+                    <i class="fas fa-edit"></i>
+                    <h3>Create an Exam</h3>
+                    <p>Design and publish new exams</p>
+                </a>
+                
+                <a href="take_exam.html" class="action-card take-exam">
+                    <i class="fas fa-pencil-alt"></i>
+                    <h3>Pass an Exam</h3>
+                    <p>Take available exams</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    <script src="../public/js/main.js"></script>
+</body>
+</html>
