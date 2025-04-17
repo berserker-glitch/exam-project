@@ -17,111 +17,391 @@
  * @module ExamCreation
  */
 
-let questionCounter = 0;
+// Get DOM elements
+const examForm = document.getElementById('examCreationForm');
+const addQuestionBtn = document.getElementById('addQuestionBtn');
+const questionTypeModal = document.getElementById('questionTypeModal');
+const closeModalBtn = document.getElementById('closeQuestionTypeModal');
+const questionCreationModal = document.getElementById('questionCreationModal');
+const cancelQuestionBtn = document.getElementById('cancelQuestionBtn');
+const questionForm = document.getElementById('questionForm');
+const questionContainer = document.getElementById('questionContainer');
 
-/**
- * Displays the question type selection modal
- * Allows users to choose between MCQ and direct questions
- */
-function showQuestionTypeModal() {
-    document.getElementById('questionTypeModal').style.display = 'block';
+// Event listeners
+examForm.addEventListener('submit', handleExamSubmit);
+addQuestionBtn.addEventListener('click', openQuestionTypeModal);
+closeModalBtn.addEventListener('click', closeQuestionTypeModal);
+questionTypeModal.addEventListener('click', selectQuestionType);
+cancelQuestionBtn.addEventListener('click', closeQuestionCreationModal);
+questionForm.addEventListener('submit', handleQuestionSubmit);
+
+// Global variables
+let examData = {
+    name: '',
+    semester: '',
+    group: '',
+    questions: []
+};
+
+// Handle exam form submission
+async function handleExamSubmit(event) {
+    event.preventDefault();
+
+    const examName = document.getElementById('examName').value.trim();
+    const targetSemester = document.getElementById('targetSemester').value.trim();
+    const targetGroup = document.getElementById('targetGroup').value.trim();
+
+    if (!validateExamDetails(examName, targetSemester)) {
+        return;
+    }
+
+    examData.name = examName;
+    examData.semester = targetSemester;
+    examData.group = targetGroup;
+    
+    // Generate a UUID for the exam
+    const examId = generateUUID();
+    examData.id = examId;
+
+    try {
+        // TEMPORARY FALLBACK: Save to localStorage since backend API is not yet implemented
+        // Remove this block once the backend API is ready
+        const exams = JSON.parse(localStorage.getItem('exams') || '[]');
+        examData.createdAt = new Date().toISOString();
+        exams.push(examData);
+        localStorage.setItem('exams', JSON.stringify(exams));
+        console.log('Exam saved to localStorage temporarily:', examData);
+        showSuccessMessage('Exam created successfully! (Saved locally)');
+        displayExamLink(examId);
+        resetForm();
+        return; // Skip the API call for now
+        
+        // Uncomment this block once the backend API is ready
+        /*
+        const response = await fetch('/api/exams', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(examData)
+        });
+
+        if (response.ok) {
+            showSuccessMessage('Exam created successfully!');
+            // Display the exam link to share with students
+            displayExamLink(examId);
+            resetForm();
+        } else {
+            const errorData = await response.json();
+            showErrorMessage(`Failed to create exam: ${errorData.message}`);
+        }
+        */
+    } catch (error) {
+        console.error('Error creating exam:', error);
+        showErrorMessage('An error occurred while creating the exam. Please try again.');
+    }
 }
 
-/**
- * Hides the question type selection modal
- */
+// Validate exam details
+function validateExamDetails(examName, targetSemester) {
+    if (examName === '') {
+        showErrorMessage('Please enter an exam name.');
+        return false;
+    }
+
+    if (targetSemester === '') {
+        showErrorMessage('Please enter a target semester.');
+        return false;
+    }
+
+    return true;
+}
+
+// Open question type modal
+function openQuestionTypeModal() {
+    questionTypeModal.style.display = 'block';
+}
+
+// Close question type modal
 function closeQuestionTypeModal() {
-    document.getElementById('questionTypeModal').style.display = 'none';
+    questionTypeModal.style.display = 'none';
 }
 
-/**
- * Adds a new question to the exam
- * 
- * Creates either an MCQ or direct question based on type:
- * - Clones appropriate template
- * - Sets unique question ID
- * - Updates question numbering
- * - Adds to question list
- * 
- * @param {string} type - Question type ('mcq' or 'direct')
- */
-function addQuestion(type) {
-    questionCounter++;
-    const template = document.getElementById(type === 'direct' ? 'directQuestionTemplate' : 'mcqQuestionTemplate');
-    const questionsList = document.getElementById('questionsList');
-    
-    // Clone the template
-    const questionNode = template.content.cloneNode(true);
-    
-    // Replace placeholders
-    const questionHtml = questionNode.firstElementChild;
-    questionHtml.dataset.questionId = questionCounter;
-    questionHtml.innerHTML = questionHtml.innerHTML
-        .replace(/QUESTION_ID/g, questionCounter)
-        .replace(/QUESTION_NUMBER/g, questionCounter);
-    
-    // Add to questions list
-    questionsList.appendChild(questionHtml);
-    closeQuestionTypeModal();
+// Select question type
+function selectQuestionType(event) {
+    if (event.target.classList.contains('question-type-btn')) {
+        const questionType = event.target.dataset.type;
+        openQuestionCreationModal(questionType);
+        closeQuestionTypeModal();
+    }
 }
 
-/**
- * Adds a new option to an MCQ question
- * 
- * Creates an option with:
- * - Checkbox for correct answer
- * - Text input for option content
- * - Remove button
- * 
- * @param {number} questionId - ID of the MCQ question
- */
-function addMCQOption(questionId) {
-    const questionCard = document.querySelector(`[data-question-id="${questionId}"]`);
-    const optionsContainer = questionCard.querySelector('.mcq-options');
-    
-    const optionDiv = document.createElement('div');
-    optionDiv.className = 'mcq-option';
-    optionDiv.innerHTML = `
-        <input type="checkbox" class="option-correct">
-        <input type="text" class="option-text" placeholder="Enter option">
-        <button type="button" class="btn remove-option-btn" onclick="removeOption(this)">
+// Open question creation modal
+function openQuestionCreationModal(questionType) {
+    questionCreationModal.style.display = 'block';
+    questionForm.dataset.questionType = questionType;
+
+    const optionsContainer = document.getElementById('optionsContainer');
+    optionsContainer.innerHTML = '';
+
+    if (questionType === 'mcq') {
+        const optionInputs = `
+            <label>Options</label>
+            <div id="mcqOptions">
+                <div class="mcq-option">
+                    <input type="text" name="option1" placeholder="Option 1" required>
+                    <button type="button" class="btn remove-option-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mcq-option">
+                    <input type="text" name="option2" placeholder="Option 2" required>
+                    <button type="button" class="btn remove-option-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="btn add-option-btn" id="addOptionBtn">
+                <i class="fas fa-plus"></i> Add Option
+            </button>
+        `;
+        optionsContainer.innerHTML = optionInputs;
+
+        const addOptionBtn = document.getElementById('addOptionBtn');
+        addOptionBtn.addEventListener('click', addMCQOption);
+
+        const removeOptionBtns = document.querySelectorAll('.remove-option-btn');
+        removeOptionBtns.forEach(btn => {
+            btn.addEventListener('click', removeMCQOption);
+        });
+    }
+}
+
+// Close question creation modal
+function closeQuestionCreationModal() {
+    questionCreationModal.style.display = 'none';
+    questionForm.reset();
+}
+
+// Handle question form submission
+async function handleQuestionSubmit(event) {
+    event.preventDefault();
+
+    const questionType = questionForm.dataset.questionType;
+    const questionText = document.getElementById('questionText').value.trim();
+    const correctAnswer = document.getElementById('correctAnswer').value.trim();
+    const points = parseInt(document.getElementById('points').value);
+
+    if (!validateQuestionDetails(questionText, correctAnswer, points)) {
+        return;
+    }
+
+    const question = {
+        type: questionType,
+        text: questionText,
+        correctAnswer: correctAnswer,
+        points: points
+    };
+
+    if (questionType === 'mcq') {
+        const options = [];
+        const optionInputs = document.querySelectorAll('#mcqOptions input');
+        optionInputs.forEach(input => {
+            const optionText = input.value.trim();
+            if (optionText !== '') {
+                options.push(optionText);
+            }
+        });
+
+        if (options.length < 2) {
+            showErrorMessage('Please provide at least two options for MCQ questions.');
+            return;
+        }
+
+        question.options = options;
+    }
+
+    examData.questions.push(question);
+    displayQuestion(question);
+    closeQuestionCreationModal();
+    showSuccessMessage('Question added successfully!');
+}
+
+// Validate question details
+function validateQuestionDetails(questionText, correctAnswer, points) {
+    if (questionText === '') {
+        showErrorMessage('Please enter the question text.');
+        return false;
+    }
+
+    if (correctAnswer === '') {
+        showErrorMessage('Please enter the correct answer.');
+        return false;
+    }
+
+    if (isNaN(points) || points <= 0) {
+        showErrorMessage('Please enter a valid positive number for points.');
+        return false;
+    }
+
+    return true;
+}
+
+// Display question in the question container
+function displayQuestion(question) {
+    const questionElement = document.createElement('div');
+    questionElement.classList.add('question-card');
+
+    const questionHTML = `
+        <div class="question-header">
+            <h3>${question.text}</h3>
+            <div class="question-actions">
+                <button type="button" class="btn edit-btn">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn delete-btn">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="question-details">
+            <p><strong>Type:</strong> ${question.type}</p>
+            <p><strong>Points:</strong> ${question.points}</p>
+            ${question.type === 'mcq' ? `<p><strong>Options:</strong> ${question.options.join(', ')}</p>` : ''}
+            <p><strong>Correct Answer:</strong> ${question.correctAnswer}</p>
+        </div>
+    `;
+
+    questionElement.innerHTML = questionHTML;
+    questionContainer.appendChild(questionElement);
+}
+
+// Add MCQ option
+function addMCQOption() {
+    const mcqOptions = document.getElementById('mcqOptions');
+    const newOption = document.createElement('div');
+    newOption.classList.add('mcq-option');
+    newOption.innerHTML = `
+        <input type="text" name="option${mcqOptions.children.length + 1}" placeholder="Option ${mcqOptions.children.length + 1}" required>
+        <button type="button" class="btn remove-option-btn">
             <i class="fas fa-times"></i>
         </button>
     `;
-    
-    optionsContainer.appendChild(optionDiv);
+    mcqOptions.appendChild(newOption);
+
+    const removeOptionBtn = newOption.querySelector('.remove-option-btn');
+    removeOptionBtn.addEventListener('click', removeMCQOption);
 }
 
-/**
- * Removes an MCQ option
- * @param {HTMLElement} button - Remove button element
- */
-function removeOption(button) {
-    button.closest('.mcq-option').remove();
+// Remove MCQ option
+function removeMCQOption(event) {
+    const optionElement = event.target.closest('.mcq-option');
+    optionElement.remove();
 }
 
-/**
- * Deletes a question from the exam
- * Updates question numbering after deletion
- * 
- * @param {number} questionId - ID of the question to delete
- */
-function deleteQuestion(questionId) {
-    const question = document.querySelector(`[data-question-id="${questionId}"]`);
-    question.remove();
-    updateQuestionNumbers();
+// Show success message
+function showSuccessMessage(message) {
+    const successMessage = document.createElement('div');
+    successMessage.classList.add('success-message');
+    successMessage.textContent = message;
+    document.body.appendChild(successMessage);
+
+    setTimeout(() => {
+        successMessage.remove();
+    }, 3000);
 }
 
-/**
- * Updates question numbers after deletion
- * Ensures sequential numbering of questions
- */
-function updateQuestionNumbers() {
-    const questions = document.querySelectorAll('.question-card');
-    questions.forEach((question, index) => {
-        const number = index + 1;
-        question.querySelector('h3').textContent = `Question ${number}`;
+// Show error message
+function showErrorMessage(message) {
+    const errorMessage = document.createElement('div');
+    errorMessage.classList.add('error-message');
+    errorMessage.textContent = message;
+    document.body.appendChild(errorMessage);
+
+    setTimeout(() => {
+        errorMessage.remove();
+    }, 3000);
+}
+
+// Reset form
+function resetForm() {
+    examForm.reset();
+    questionContainer.innerHTML = '';
+    examData = {
+        name: '',
+        semester: '',
+        group: '',
+        questions: []
+    };
+}
+
+// Generate UUID for exam link
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
     });
+}
+
+// Display exam link
+function displayExamLink(examId) {
+    // Create a modal to display the exam link
+    const examLinkModal = document.createElement('div');
+    examLinkModal.classList.add('modal');
+    examLinkModal.style.display = 'block';
+    
+    // Generate the correct path to take_exam.html
+    // Get the origin (http://domain.com)
+    const origin = window.location.origin;
+    // Construct the take_exam.html URL with the exam ID
+    const examLink = `${origin}/views/take_exam.html?exam=${examId}`;
+    
+    const modalContent = document.createElement('div');
+    modalContent.classList.add('modal-content');
+    modalContent.innerHTML = `
+        <h2>Exam Created Successfully</h2>
+        <p>Your exam has been created. Share this link with your students:</p>
+        <div class="exam-link-container">
+            <input type="text" id="examLinkInput" value="${examLink}" readonly>
+            <button class="btn" id="copyExamLink">
+                <i class="fas fa-copy"></i> Copy
+            </button>
+        </div>
+        <button class="btn btn-primary" id="closeExamLinkModal">Done</button>
+    `;
+    
+    examLinkModal.appendChild(modalContent);
+    document.body.appendChild(examLinkModal);
+    
+    // Select the input text for easy copying
+    const examLinkInput = document.getElementById('examLinkInput');
+    examLinkInput.focus();
+    examLinkInput.select();
+    
+    // Add event listeners
+    document.getElementById('copyExamLink').addEventListener('click', function() {
+        examLinkInput.select();
+        document.execCommand('copy');
+        showSuccessMessage('Exam link copied to clipboard');
+    });
+    
+    document.getElementById('closeExamLinkModal').addEventListener('click', function() {
+        examLinkModal.remove();
+        // Redirect to dashboard after creating exam
+        redirectToDashboard();
+    });
+}
+
+// Redirect to dashboard
+function redirectToDashboard() {
+    const path = window.location.pathname;
+    if (path.includes('/views/')) {
+        window.location.href = './dashboard.html';
+    } else {
+        window.location.href = './views/dashboard.html';
+    }
 }
 
 /**

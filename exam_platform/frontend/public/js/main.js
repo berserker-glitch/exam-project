@@ -36,6 +36,295 @@ const mockDatabase = {
     ]
 };
 
+// Main.js - Core functionality for the Exam Platform
+
+// Global variables
+let currentUser = null;
+
+// DOM Ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Check authentication state
+    checkAuth();
+    
+    // Initialize dashboard if on dashboard page
+    if (document.querySelector('.dashboard-container')) {
+        initializeDashboard();
+    }
+    
+    // Add logout handler
+    const logoutBtn = document.querySelector('.logout-link');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
+});
+
+// Check authentication state
+async function checkAuth() {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('currentUser');
+    
+    if (token && storedUser) {
+        try {
+            // TEMPORARY: Skip token verification since backend API is not yet implemented
+            // Just use the stored user data
+            currentUser = JSON.parse(storedUser);
+            updateUIForAuthenticatedUser();
+            
+            // Uncomment once backend is ready
+            /*
+            const response = await fetch('/api/auth/verify', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                currentUser = await response.json();
+                updateUIForAuthenticatedUser();
+            } else {
+                // Token invalid, clear and redirect to login
+                localStorage.removeItem('token');
+                localStorage.removeItem('currentUser');
+                redirectToLogin();
+            }
+            */
+        } catch (error) {
+            console.error('Auth verification failed:', error);
+            // Continue as if logged in for development purposes
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+                updateUIForAuthenticatedUser();
+            } else {
+                redirectToLogin();
+            }
+        }
+    } else {
+        // No token, redirect to login page if not already there
+        const currentPath = window.location.pathname;
+        if (!isPublicPage(currentPath)) {
+            redirectToLogin();
+        }
+    }
+}
+
+// Check if current page is a public page (login, signup, index)
+function isPublicPage(path) {
+    const publicPages = [
+        '/login.html', 
+        '/signup.html', 
+        '/index.html', 
+        '/views/login.html', 
+        '/views/signup.html', 
+        '/views/index.html'
+    ];
+    
+    return publicPages.some(page => path.endsWith(page));
+}
+
+// Update UI for authenticated user
+function updateUIForAuthenticatedUser() {
+    // Update username display if element exists
+    const userNameElement = document.getElementById('userName');
+    if (userNameElement && currentUser) {
+        userNameElement.textContent = currentUser.name || 'User';
+    }
+    
+    // Update user info if elements exist
+    const userFieldElement = document.getElementById('userField');
+    if (userFieldElement && currentUser) {
+        userFieldElement.textContent = currentUser.field || 'Not specified';
+    }
+    
+    const userYearElement = document.getElementById('userYear');
+    if (userYearElement && currentUser) {
+        userYearElement.textContent = currentUser.year || 'Not specified';
+    }
+}
+
+// Initialize dashboard
+function initializeDashboard() {
+    fetchUserExamScores();
+}
+
+// Fetch user exam scores
+async function fetchUserExamScores() {
+    try {
+        // Get the current user ID to isolate scores
+        const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const userId = currentUserData.email || '';
+        
+        if (!userId) {
+            console.warn('No user ID found, cannot fetch scores');
+            return;
+        }
+        
+        // TEMPORARY FALLBACK: Fetch from localStorage since backend API is not yet implemented
+        // First try the new format (user-specific scores)
+        const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
+        
+        if (allUserScores[userId]) {
+            // We found user-specific scores, use them
+            displayExamScores(allUserScores[userId]);
+            return;
+        }
+        
+        // Fall back to the old format, but filter by user ID
+        const userScores = JSON.parse(localStorage.getItem('userScores') || '[]');
+        const filteredScores = userScores.filter(score => score.userId === userId);
+        displayExamScores(filteredScores);
+        
+        // Skip the API call for now
+        
+        // Uncomment this block once the backend API is ready
+        /*
+        const response = await fetch('/api/exams/scores', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (response.ok) {
+            const scores = await response.json();
+            displayExamScores(scores);
+        } else {
+            console.error('Failed to fetch exam scores');
+        }
+        */
+    } catch (error) {
+        console.error('Error fetching user exam scores:', error);
+    }
+}
+
+// Display exam scores in the table
+function displayExamScores(scores) {
+    console.log('Displaying scores:', scores);
+    const tableBody = document.querySelector('#examScoresTable tbody');
+    if (!tableBody) {
+        console.error('Exam scores table body not found in the DOM');
+        return;
+    }
+    
+    if (!Array.isArray(scores)) {
+        console.error('Invalid scores data:', scores);
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="no-scores">Error: Invalid score data</td>
+            </tr>
+        `;
+        return;
+    }
+    
+    if (scores.length === 0) {
+        console.log('No scores available to display');
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="no-scores">No exam scores available yet.</td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Log the current user for debugging
+    const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    console.log('Current user:', currentUserData);
+    
+    tableBody.innerHTML = '';
+    scores.forEach(score => {
+        try {
+            const row = document.createElement('tr');
+            
+            // Format the date
+            let dateTaken = 'Unknown';
+            try {
+                dateTaken = new Date(score.dateTaken).toLocaleDateString();
+            } catch (e) {
+                console.error('Error formatting date:', e, score.dateTaken);
+            }
+            
+            // Determine status based on score
+            let status = '';
+            let statusClass = '';
+            
+            if (score.score >= 80) {
+                status = 'Excellent';
+                statusClass = 'status-excellent';
+            } else if (score.score >= 60) {
+                status = 'Good';
+                statusClass = 'status-good';
+            } else if (score.score >= 40) {
+                status = 'Average';
+                statusClass = 'status-average';
+            } else {
+                status = 'Needs Improvement';
+                statusClass = 'status-needs-improvement';
+            }
+            
+            row.innerHTML = `
+                <td>${score.examName || 'Unnamed Exam'}</td>
+                <td>${score.score || 0}%</td>
+                <td>${dateTaken}</td>
+                <td class="${statusClass}">${status}</td>
+            `;
+            
+            tableBody.appendChild(row);
+        } catch (error) {
+            console.error('Error displaying score row:', error, score);
+        }
+    });
+}
+
+// Logout function
+function logout(event) {
+    if (event) event.preventDefault();
+    
+    // Check if this function is being called from the dashboard
+    // If so, we'll let the direct implementation in dashboard.html handle it
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/dashboard.html')) {
+        console.log('Logout handled directly by dashboard.html');
+        return; // Exit early and let dashboard.html handle logout
+    }
+    
+    // For other pages, clear storage and redirect
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('user');
+    localStorage.removeItem('allUserScores');
+    
+    // Direct path construction based on current location
+    if (currentPath.includes('/views/')) {
+        window.location.href = 'login.html';
+    } else {
+        window.location.href = 'views/login.html';
+    }
+}
+
+// Get base path for URL construction
+function getBasePath() {
+    const path = window.location.pathname;
+    
+    // Check if we're already in the /views/ directory by looking for /views/ in the path
+    if (path.includes('/views/')) {
+        // If we're in views already, don't add views again
+        return '';
+    } else {
+        // If we're not in views, add it
+        return 'views/';
+    }
+}
+
+// Redirect to login page
+function redirectToLogin() {
+    const basePath = getBasePath();
+    window.location.href = `${basePath}login.html`;
+}
+
+// Redirect to dashboard page
+function redirectToDashboard() {
+    const basePath = getBasePath();
+    window.location.href = `${basePath}dashboard.html`;
+}
+
 /**
  * Login Form Validation and Submission
  * 
@@ -68,27 +357,23 @@ async function validateLogin(event) {
     }
 
     try {
-        const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            alert(data.message || 'Login failed');
-            return false;
-        }
-
+        // TEMPORARY: Mock login for development
         // Store token and user data
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        const token = "mock_token_" + Date.now();
+        const user = {
+            name: email.split('@')[0],
+            email: email,
+            field: "Computer Science",
+            year: "2nd Year"
+        };
+        
+        localStorage.setItem('token', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
         
         // Redirect to dashboard
-        window.location.href = 'dashboard.html';
+        redirectToDashboard();
+        
+        return false;
     } catch (error) {
         console.error('Login error:', error);
         alert('Error during login. Please try again.');
@@ -222,35 +507,12 @@ async function validateSignup(event) {
         }
 
         alert('Registration successful! Please login with your credentials.');
-        window.location.href = 'login.html';
+        window.location.href = 'views/login.html';
     } catch (error) {
         console.error('Registration error:', error);
         alert('Error during registration. Please try again or contact support if the problem persists.');
     }
     return false;
-}
-
-/**
- * Dashboard Initialization
- * 
- * Sets up the dashboard page:
- * 1. Checks for valid session
- * 2. Redirects to login if no session
- * 3. Updates UI with user information
- */
-async function initializeDashboard() {
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-
-    if (!token || !user) {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    // Update dashboard with user info
-    document.getElementById('userName').textContent = user.full_name;
-    document.getElementById('userField').textContent = user.filiere.toUpperCase();
-    document.getElementById('userYear').textContent = `Semester ${user.semester}`;
 }
 
 /**
@@ -279,7 +541,7 @@ async function logout() {
     // Clear local storage and redirect
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = 'login.html';
+    window.location.href = 'views/login.html';
 }
 
 // Initialize dashboard if we're on the dashboard page
@@ -295,9 +557,14 @@ if (window.location.pathname.includes('dashboard.html')) {
  * @param {string} inputId - ID of the password input field
  */
 function togglePasswordVisibility(inputId) {
-    const container = document.getElementById(inputId).parentElement;
     const input = document.getElementById(inputId);
+    if (!input) return;
     
-    container.classList.toggle('show-password');
     input.type = input.type === 'password' ? 'text' : 'password';
+    
+    // Toggle icon if present
+    const container = input.parentElement;
+    if (container) {
+        container.classList.toggle('show-password');
+    }
 }

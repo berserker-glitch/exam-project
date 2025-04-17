@@ -3,14 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Take Exam - EC</title>
+    <title>Take Exam - Exam Platform</title>
     <link rel="stylesheet" href="../public/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="todo-container">
-        <div class="todo-text">TODO</div>
+    <div class="exam-container">
+        <!-- User Authentication Section -->
+        <div id="userAuth" class="user-auth">
+            <!-- This section will be dynamically updated based on login status -->
+            <div id="verifySection" style="display:none;">
+                <h2>Verify Your Identity</h2>
+                <p>Please enter your password to continue</p>
+                
+                <form id="verifyForm" class="auth-form">
+                    <h3>Password Verification</h3>
+                    <div class="user-info-display">
+                        <p>Email: <span id="userEmailDisplay"></span></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="verifyPassword">Password</label>
+                        <input type="password" id="verifyPassword" name="verifyPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify</button>
+                </form>
+            </div>
+            
+            <div id="loginRegisterSection">
+                <h2>Welcome to the Exam Platform</h2>
+                <p>Please register or login to continue</p>
+                
+                <form id="registrationForm" class="auth-form">
+                    <h3>Registration</h3>
+                    <div class="form-group">
+                        <label for="regName">Name</label>
+                        <input type="text" id="regName" name="regName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" name="regEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Password</label>
+                        <input type="password" id="regPassword" name="regPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+
+                <form id="loginForm" class="auth-form">
+                    <h3>Login</h3>
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" name="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" name="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Geolocation Activation - Hidden and Disabled -->
+        <div id="geolocationActivation" class="geolocation-activation" style="display:none;">
+            <h2>Geolocation Activation</h2>
+            <p>Please allow geolocation access to proceed with the exam</p>
+            <button id="activateGeolocation" class="btn btn-primary">Activate Geolocation</button>
+        </div>
+
+        <!-- Exam Link Input -->
+        <div id="examLinkSection" class="exam-link-section">
+            <h2>Enter Exam Link</h2>
+            <p>Please enter the exam link provided by your instructor</p>
+            <form id="examLinkForm" class="exam-link-form">
+                <div class="form-group">
+                    <label for="examLink">Exam Link</label>
+                    <input type="text" id="examLink" name="examLink" placeholder="Enter exam link" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Start Exam</button>
+            </form>
+        </div>
+
+        <!-- Exam Questions -->
+        <div id="examQuestions" class="exam-questions">
+            <!-- Timer will be dynamically added here -->
+            
+            <!-- Question Navigation Dots -->
+            <div id="questionNavigation" class="question-navigation-dots"></div>
+            
+            <!-- Answered Counter -->
+            <div id="answeredCounter" class="answered-counter">0/0 questions answered</div>
+            
+            <!-- Question Container -->
+            <div id="questionContainer" class="question-container">
+                <!-- Questions will be dynamically added here -->
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="question-navigation-buttons">
+                <button id="prevQuestion" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Previous</button>
+                <button id="nextQuestion" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
+                <button id="submitExam" class="btn btn-success"><i class="fas fa-check"></i> Submit Exam</button>
+            </div>
+        </div>
+
+        <!-- Exam Result -->
+        <div id="examResult" class="exam-result">
+            <h2>Exam Result</h2>
+            <div class="result-card">
+                <div class="score-display">
+                    <span id="examScore">0</span>
+                    <span class="score-label">/ 100</span>
+                </div>
+                <div class="result-details">
+                    <p>Correct answers: <span id="correctAnswers">0</span> out of <span id="totalQuestions">0</span></p>
+                    <p>Time taken: <span id="timeTaken">0 minutes</span></p>
+                </div>
+                <a href="dashboard.html" class="btn btn-primary"><i class="fas fa-home"></i> Back to Dashboard</a>
+            </div>
+        </div>
     </div>
-    <script src="../public/js/main.js"></script>
+
+    <script src="../public/js/take_exam.js"></script>
+    <script>
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            
+            if (currentUser && currentUser.email) {
+                // User is logged in, show only verification form
+                document.getElementById('loginRegisterSection').style.display = 'none';
+                document.getElementById('verifySection').style.display = 'block';
+                document.getElementById('userEmailDisplay').textContent = currentUser.email;
+                
+                // Set up form submission
+                document.getElementById('verifyForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const password = document.getElementById('verifyPassword').value;
+                    
+                    // Create a login object that matches what the original login function expects
+                    const loginEvent = {
+                        preventDefault: function() {}
+                    };
+                    
+                    // Call the existing loginUser function with our data
+                    if (window.loginUser) {
+                        window.loginUser(loginEvent, currentUser.email, password);
+                    }
+                });
+            } else {
+                // User is not logged in, show registration and login forms
+                document.getElementById('verifySection').style.display = 'none';
+                document.getElementById('loginRegisterSection').style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { v4: uuidv4 } = require('uuid');
 
 // Create a new exam
 const createExam = async (req, res) => {
@@ -7,10 +8,14 @@ const createExam = async (req, res) => {
             title, 
             description, 
             targetYear, 
+            targetField, 
             targetSemester, 
             targetGroup, 
             questions 
         } = req.body;
+
+        // Generate a unique access link for the exam
+        const accessLink = uuidv4();
 
         // Start a transaction
         const connection = await pool.getConnection();
@@ -19,24 +24,26 @@ const createExam = async (req, res) => {
         try {
             // Insert exam details
             const [examResult] = await connection.query(
-                'INSERT INTO exams (title, description, target_year, target_semester, target_group, created_by) VALUES (?, ?, ?, ?, ?, ?)',
-                [title, description, targetYear, targetSemester, targetGroup, req.user.id]
+                'INSERT INTO exams (title, description, target_year, target_field, target_semester, target_group, access_link) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [title, description, targetYear, targetField, targetSemester, targetGroup, accessLink]
             );
 
             const examId = examResult.insertId;
 
             // Insert questions
             for (const question of questions) {
+                const { type, statement, options, correctAnswer, tolerance, points, duration } = question;
+
                 const [questionResult] = await connection.query(
-                    'INSERT INTO questions (exam_id, question_text, question_type, points, time_limit) VALUES (?, ?, ?, ?, ?)',
-                    [examId, question.text, question.type, question.points, question.timeLimit]
+                    'INSERT INTO questions (exam_id, type, statement, options, correct_answer, tolerance, points, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [examId, type, statement, JSON.stringify(options), correctAnswer, tolerance, points, duration]
                 );
 
                 const questionId = questionResult.insertId;
 
                 // Handle question options for MCQ
-                if (question.type === 'mcq' && question.options) {
-                    for (const option of question.options) {
+                if (type === 'mcq' && options) {
+                    for (const option of options) {
                         await connection.query(
                             'INSERT INTO question_options (question_id, option_text, is_correct) VALUES (?, ?, ?)',
                             [questionId, option.text, option.isCorrect]
@@ -45,10 +52,10 @@ const createExam = async (req, res) => {
                 }
 
                 // Handle direct question answers
-                if (question.type === 'direct' && question.correctAnswer) {
+                if (type === 'direct' && correctAnswer) {
                     await connection.query(
                         'INSERT INTO direct_answers (question_id, correct_answer, tolerance) VALUES (?, ?, ?)',
-                        [questionId, question.correctAnswer, question.tolerance || 0]
+                        [questionId, correctAnswer, tolerance || 0]
                     );
                 }
             }
@@ -59,7 +66,8 @@ const createExam = async (req, res) => {
             res.status(201).json({
                 success: true,
                 message: 'Exam created successfully',
-                examId: examId
+                examId: examId,
+                accessLink: accessLink
             });
 
         } catch (error) {

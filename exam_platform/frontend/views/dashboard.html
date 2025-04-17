@@ -3,25 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - EC</title>
+    <title>Dashboard - Exam Platform</title>
     <link rel="stylesheet" href="../public/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- First load main.js -->
+    <script src="../public/js/main.js"></script>
+    <!-- Then override the logout function -->
+    <script>
+        // Completely override the logout function defined in main.js
+        window.logout = function(event) {
+            if (event) event.preventDefault();
+            console.log("Custom logout function executed");
+            
+            // Clear all user data
+            localStorage.removeItem('token');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('user');
+            localStorage.removeItem('allUserScores');
+            localStorage.removeItem('userScores');
+            
+            // Direct absolute path to the login page
+            window.location.href = window.location.origin + "/views/login.html";
+        };
+    </script>
 </head>
 <body>
     <div class="dashboard-container">
         <div class="dashboard-header">
             <h1>Welcome, <span id="userName">User</span></h1>
-            <p>Your Study Progress</p>
-            <a href="#" onclick="logout()" class="logout-link">
+            <div class="user-session-info">
+                <p>Logged in as: <span id="userEmail">-</span></p>
+                <p>Session started: <span id="sessionTime">-</span></p>
+            </div>
+            <!-- Keep the original logout link but with our overridden function -->
+            <a href="#" onclick="logout(event)" class="logout-link">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>
         </div>
         
         <div class="dashboard-content">
             <div class="user-info">
-                <p>Field: <span id="userField"></span></p>
-                <p>Semester: <span id="userYear"></span></p>
+                <p>Field: <span id="userField">-</span></p>
+                <p>Semester: <span id="userYear">-</span></p>
+            </div>
+
+            <div class="exam-scores">
+                <h2>Your Exam Scores</h2>
+                <div id="scoresSummary" class="scores-summary">
+                    <div class="score-stat">
+                        <span class="stat-number" id="examsTaken">0</span>
+                        <span class="stat-label">Exams Taken</span>
+                    </div>
+                    <div class="score-stat">
+                        <span class="stat-number" id="avgScore">0%</span>
+                        <span class="stat-label">Average Score</span>
+                    </div>
+                    <div class="score-stat">
+                        <span class="stat-number" id="highestScore">0%</span>
+                        <span class="stat-label">Highest Score</span>
+                    </div>
+                </div>
+                <table id="examScoresTable">
+                    <thead>
+                        <tr>
+                            <th>Exam Title</th>
+                            <th>Score</th>
+                            <th>Date Taken</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Exam scores will be dynamically added here -->
+                        <tr>
+                            <td colspan="4" class="no-scores">Loading exam scores...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="action-cards">
@@ -39,6 +97,54 @@
             </div>
         </div>
     </div>
-    <script src="../public/js/main.js"></script>
+
+    <script>
+        // Update user information on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get user data
+            const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userId = currentUserData.email || 'anonymous';
+            
+            // Update user info in the UI
+            document.getElementById('userName').textContent = currentUserData.name || 'User';
+            document.getElementById('userEmail').textContent = userId;
+            document.getElementById('sessionTime').textContent = new Date().toLocaleTimeString();
+            
+            // Update user field and year if available
+            if (currentUserData.field) {
+                document.getElementById('userField').textContent = currentUserData.field;
+            }
+            if (currentUserData.year) {
+                document.getElementById('userYear').textContent = currentUserData.year;
+            }
+            
+            // Update score statistics
+            updateScoreStatistics();
+        });
+        
+        // Calculate and display score statistics
+        function updateScoreStatistics() {
+            const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userId = currentUserData.email || 'anonymous';
+            
+            // Get scores for this user
+            const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
+            const scores = allUserScores[userId] || [];
+            
+            // Update exam count
+            document.getElementById('examsTaken').textContent = scores.length;
+            
+            if (scores.length > 0) {
+                // Calculate average score
+                const totalScore = scores.reduce((sum, score) => sum + score.score, 0);
+                const avgScore = Math.round(totalScore / scores.length);
+                document.getElementById('avgScore').textContent = `${avgScore}%`;
+                
+                // Find highest score
+                const highestScore = Math.max(...scores.map(score => score.score));
+                document.getElementById('highestScore').textContent = `${highestScore}%`;
+            }
+        }
+    </script>
 </body>
 </html>
