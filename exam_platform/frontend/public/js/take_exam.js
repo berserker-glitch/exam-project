@@ -368,8 +368,8 @@ async function handleExamLinkSubmit(event) {
   
   try {
     await fetchExamQuestions(examLink);
-    examLinkSection.style.display = 'none';
-    examQuestionsSection.style.display = 'block';
+  examLinkSection.style.display = 'none';
+  examQuestionsSection.style.display = 'block';
   } catch (error) {
     console.error('Error fetching exam questions:', error);
     showErrorMessage('Failed to load the exam. Please check the link and try again.');
@@ -395,7 +395,7 @@ async function fetchExamQuestions(examLink) {
     console.log('Found exam:', exam);
     
     // Set up exam data
-    examQuestions = exam.questions;
+      examQuestions = exam.questions;
     examDuration = 60 * 60; // Default to 60 minutes if not specified
     examTitle = exam.name || "Exam";
     
@@ -411,7 +411,7 @@ async function fetchExamQuestions(examLink) {
     updateNavigationButtons();
     
     // Start exam timer
-    startExamTimer();
+      startExamTimer();
     
     return exam;
   } catch (error) {
@@ -472,15 +472,15 @@ function startExamTimer() {
 
 function showQuestion(index) {
   // Validate index
-  if (index < 0 || index >= examQuestions.length) {
-    return;
-  }
+    if (index < 0 || index >= examQuestions.length) {
+        return;
+    }
 
-  currentQuestionIndex = index;
+    currentQuestionIndex = index;
   const question = examQuestions[index];
     
   // Clear previous question
-  questionContainer.innerHTML = '';
+    questionContainer.innerHTML = '';
 
   // Create question card
   const questionCard = document.createElement('div');
@@ -519,7 +519,7 @@ function showQuestion(index) {
       optionInput.className = 'mcq-option-input';
       
       // Check if this option was previously selected
-      if (userAnswers[index] === option) {
+            if (userAnswers[index] === option) {
         optionInput.checked = true;
       }
       
@@ -560,7 +560,7 @@ function showQuestion(index) {
     answerInput.className = 'question-answer-input';
     
     // Set the previous answer if available
-    if (userAnswers[index]) {
+        if (userAnswers[index]) {
       answerInput.value = userAnswers[index];
     }
     
@@ -586,13 +586,13 @@ function showQuestion(index) {
   questionContainer.appendChild(questionCard);
   
   // Update navigation buttons
-  updateNavigationButtons();
+    updateNavigationButtons();
   
   // Update the active dot in the navigation
-  updateQuestionNavigation();
+    updateQuestionNavigation();
   
   // Update answered counter
-  updateAnsweredCounter();
+    updateAnsweredCounter();
 }
 
 function updateNavigationButtons() {
@@ -613,7 +613,7 @@ function updateQuestionNavigation() {
   const navigationDots = document.getElementById('questionNavigation');
   navigationDots.innerHTML = '';
     
-  examQuestions.forEach((_, index) => {
+    examQuestions.forEach((_, index) => {
     const dot = document.createElement('div');
     dot.className = 'nav-dot';
     
@@ -621,61 +621,61 @@ function updateQuestionNavigation() {
     dot.textContent = index + 1;
         
     // Add appropriate classes
-    if (index === currentQuestionIndex) {
+        if (index === currentQuestionIndex) {
       dot.classList.add('active');
-    }
+        }
         
     if (userAnswers[index] !== null) {
       dot.classList.add('answered');
-    }
+        }
         
     // Add click event to navigate to the question
     dot.addEventListener('click', () => {
       saveAnswer(); // Save current answer before switching
-      showQuestion(index);
-    });
+            showQuestion(index);
+        });
         
     navigationDots.appendChild(dot);
-  });
+    });
 }
 
 function updateAnsweredCounter() {
   const answeredCount = userAnswers.filter(answer => answer !== null).length;
-  const totalCount = examQuestions.length;
+    const totalCount = examQuestions.length;
     
   const answeredCounter = document.getElementById('answeredCounter');
-  answeredCounter.textContent = `${answeredCount}/${totalCount} questions answered`;
+    answeredCounter.textContent = `${answeredCount}/${totalCount} questions answered`;
     
   // Add visual indicator if all questions are answered
-  if (answeredCount === totalCount) {
+    if (answeredCount === totalCount) {
     answeredCounter.classList.add('all-answered');
-  } else {
+    } else {
     answeredCounter.classList.remove('all-answered');
-  }
+    }
 }
 
 function showNextQuestion() {
   saveAnswer();
-  if (currentQuestionIndex < examQuestions.length - 1) {
-    showQuestion(currentQuestionIndex + 1);
-  }
+    if (currentQuestionIndex < examQuestions.length - 1) {
+        showQuestion(currentQuestionIndex + 1);
+    }
 }
 
 function showPreviousQuestion() {
   saveAnswer();
-  if (currentQuestionIndex > 0) {
-    showQuestion(currentQuestionIndex - 1);
-  }
+    if (currentQuestionIndex > 0) {
+        showQuestion(currentQuestionIndex - 1);
+    }
 }
 
 function saveAnswer() {
-  const question = examQuestions[currentQuestionIndex];
+    const question = examQuestions[currentQuestionIndex];
   let answer = null;
   
   if (question.type === 'mcq') {
     // Get selected option for MCQ
     const selectedOption = document.querySelector(`input[name="question-${currentQuestionIndex}"]:checked`);
-    if (selectedOption) {
+        if (selectedOption) {
       answer = selectedOption.value;
     }
   } else {
@@ -697,8 +697,8 @@ function saveAnswer() {
 
 async function submitExam() {
   // Save the current answer
-  saveAnswer();
-  
+    saveAnswer();
+    
   const unansweredCount = userAnswers.filter(answer => answer === null).length;
   let confirmMessage = 'Are you sure you want to submit your exam? You cannot change your answers after submission.';
   
@@ -707,18 +707,18 @@ async function submitExam() {
   }
   
   if (!confirm(confirmMessage)) {
-    return;
-  }
+      return;
+    }
     
   // Stop the timer
   clearInterval(examTimer);
 
-  // Calculate score
-  let score = 0;
+    // Calculate score
+    let score = 0;
   let totalPoints = 0;
   let correctAnswers = 0;
     
-  examQuestions.forEach((question, index) => {
+    examQuestions.forEach((question, index) => {
     totalPoints += question.points;
     
     if (userAnswers[index] === null) {
@@ -732,16 +732,16 @@ async function submitExam() {
         score += question.points;
         correctAnswers++;
       }
-    } else {
+        } else {
       // For direct answers, comparison should be case-insensitive
       if (userAnswers[index].toLowerCase() === question.correctAnswer.toLowerCase()) {
         score += question.points;
         correctAnswers++;
+        }
       }
-    }
-  });
+    });
 
-  // Calculate percentage score
+    // Calculate percentage score
   const percentageScore = Math.round((score / totalPoints) * 100);
   
   // Display result
@@ -798,6 +798,7 @@ function saveExamScore(score) {
   const userId = currentUser.email;
   
   const scoreData = {
+    userId: userId, // Explicitly adding userId to score object for better tracking
     examId: examId,
     examTitle: examTitle,
     score: score,
@@ -806,7 +807,7 @@ function saveExamScore(score) {
     timeTaken: timeSpent  // Save time taken in seconds
   };
   
-  // Get all user scores from localStorage
+  // Get all user scores from localStorage using the new structure
   const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
   
   // Add or create user scores array
@@ -814,11 +815,53 @@ function saveExamScore(score) {
     allUserScores[userId] = [];
   }
   
-  // Add new score
+  // Add new score to localStorage
   allUserScores[userId].push(scoreData);
-  
-  // Save back to localStorage
   localStorage.setItem('allUserScores', JSON.stringify(allUserScores));
+  
+  // Also maintain backward compatibility with the old format
+  let userScores = JSON.parse(localStorage.getItem('userScores') || '[]');
+  userScores.push(scoreData);
+  localStorage.setItem('userScores', JSON.stringify(userScores));
+  
+  // Get token for authentication
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('No authentication token found, score saved only locally');
+    return;
+  }
+  
+  // Send score to the server
+  fetch('/api/exams/scores', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      userId: userId,
+      examId: scoreData.examId,
+      examTitle: scoreData.examTitle,
+      score: scoreData.score,
+      timeTaken: scoreData.timeTaken,
+      dateTaken: scoreData.dateTaken,
+      status: scoreData.status
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to save score to server');
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Score saved to server:', data);
+  })
+  .catch(error => {
+    console.error('Error saving score to server:', error);
+    // Score is still saved in localStorage as a fallback
+  });
+  
   console.log(`Score saved for user ${userId}: ${score}%`);
 }
 
@@ -828,17 +871,17 @@ function showLoginForm() {
 }
 
 async function initializeExam() {
-  // Check if user is logged in
-  const storedUser = localStorage.getItem('currentUser');
+    // Check if user is logged in
+    const storedUser = localStorage.getItem('currentUser');
   if (storedUser) {
-    currentUser = JSON.parse(storedUser);
+      currentUser = JSON.parse(storedUser);
       
     // Show verify section with email prefilled
-    userAuthSection.style.display = 'block';
+          userAuthSection.style.display = 'block';
     document.getElementById('loginRegisterSection').style.display = 'none';
     document.getElementById('verifySection').style.display = 'block';
     document.getElementById('userEmailDisplay').textContent = currentUser.email;
-  } else {
+        } else {
     // User not logged in, show login/register options
     userAuthSection.style.display = 'block';
     document.getElementById('loginRegisterSection').style.display = 'block';

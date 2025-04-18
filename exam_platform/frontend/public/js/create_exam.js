@@ -385,7 +385,7 @@ function displayQuestion(question, index) {
     const questionElement = document.createElement('div');
     questionElement.id = `question-${index}`;
     questionElement.className = 'question-card';
-    
+
     // Define question type label
     const typeLabel = question.type === 'mcq' ? 
                      'Multiple Choice' : 'Direct Answer';
@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .edit-question-btn, .delete-question-btn {
             padding: 4px 8px;
             font-size: 12px;
-        }
+    }
     `;
     document.head.appendChild(styleElement);
 }); 

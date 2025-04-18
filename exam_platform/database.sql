@@ -26,10 +26,25 @@ CREATE TABLE IF NOT EXISTS sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Create exam scores table
+CREATE TABLE IF NOT EXISTS exam_scores (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    exam_id VARCHAR(100) NOT NULL,
+    exam_title VARCHAR(255) NOT NULL,
+    score INT NOT NULL,
+    date_taken TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    time_taken INT DEFAULT 0,       -- Time taken in seconds
+    status ENUM('Passed', 'Failed') NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_email ON users(email);
 CREATE INDEX idx_session_token ON sessions(session_token(255));
 CREATE INDEX idx_expires_at ON sessions(expires_at);
+CREATE INDEX idx_user_id ON exam_scores(user_id);
+CREATE INDEX idx_exam_id ON exam_scores(exam_id);
 
 -- Sample insert query for testing (password: Test@123)
 INSERT INTO users (full_name, email, password_hash, date_of_birth, sex, filiere, semester)

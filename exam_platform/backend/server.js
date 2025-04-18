@@ -7,6 +7,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const examRoutes = require('./routes/exams');
 
 const app = express();
 
@@ -21,6 +23,12 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Mount authentication routes under /api/auth
 app.use('/api/auth', authRoutes);
+
+// Mount user routes under /api/users
+app.use('/api/users', userRoutes);
+
+// Mount exam routes under /api/exams
+app.use('/api/exams', examRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -41,5 +49,10 @@ app.listen(PORT, () => {
     console.log('\n📝 API Documentation:');
     console.log('   POST /api/auth/register - Register a new user');
     console.log('   POST /api/auth/login - Login user');
-    console.log('   POST /api/auth/logout - Logout user\n');
+    console.log('   POST /api/auth/logout - Logout user');
+    console.log('   GET /api/users - Get all users');
+    console.log('   GET /api/users/:id - Get user by ID');
+    console.log('   GET /api/users/me - Get current user');
+    console.log('   GET /api/exams/scores/me - Get current user exam scores');
+    console.log('   POST /api/exams/scores - Save an exam score\n');
 });

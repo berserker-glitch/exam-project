@@ -16,15 +16,12 @@
             if (event) event.preventDefault();
             console.log("Custom logout function executed");
             
-            // Clear all user data
+            // Remove only authentication-related data
             localStorage.removeItem('token');
             localStorage.removeItem('currentUser');
-            localStorage.removeItem('user');
-            localStorage.removeItem('allUserScores');
-            localStorage.removeItem('userScores');
             
-            // Direct absolute path to the login page
-            window.location.href = window.location.origin + "/views/login.html";
+            // Redirect to login page
+            window.location.href = 'login.html';
         };
     </script>
 </head>
@@ -75,22 +72,25 @@
                         <span class="stat-label">Highest Score</span>
                     </div>
                 </div>
-                <table id="examScoresTable">
+                <table id="exam-scores-table">
                     <thead>
                         <tr>
                             <th>Exam Title</th>
                             <th>Score</th>
                             <th>Date Taken</th>
+                            <th>Time</th>
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="exam-scores-body">
                         <!-- Exam scores will be dynamically added here -->
-                        <tr>
-                            <td colspan="4" class="no-scores">Loading exam scores...</td>
-                        </tr>
                     </tbody>
                 </table>
+                <div id="no-scores-message" class="empty-scores" style="display: none;">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>No exams taken yet</p>
+                    <a href="take_exam.html" class="btn btn-primary">Take Your First Exam</a>
+                </div>
             </div>
 
             <div class="action-cards">
@@ -112,38 +112,71 @@
     <script>
         // Update user information on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Get user data
-            const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const userId = currentUserData.email || 'anonymous';
+            const token = localStorage.getItem('token');
             
-            // Update user info in the UI
-            document.getElementById('userName').textContent = currentUserData.name || 'User';
-            document.getElementById('userEmail').textContent = userId;
-            
-            // Update user field and semester if available
-            if (currentUserData.field) {
-                document.getElementById('userField').textContent = currentUserData.field;
-            }
-            if (currentUserData.semester) {
-                document.getElementById('userSemester').textContent = currentUserData.semester;
-            } else if (currentUserData.year) {
-                // Backward compatibility for old data structure
-                document.getElementById('userSemester').textContent = currentUserData.year;
+            if (!token) {
+                // Redirect to login if no token is found
+                window.location.href = 'login.html';
+                return;
             }
             
-            // Update score statistics
-            updateScoreStatistics();
+            // Call initializeDashboard from main.js
+            if (typeof initializeDashboard === 'function') {
+                initializeDashboard();
+            }
+            
+            // Fetch current user data using the token
+            fetch('/api/users/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to authenticate user');
+                }
+                return response.json();
+            })
+            .then(user => {
+                // Update the UI with user information
+                document.getElementById('userName').textContent = user.first_name || user.full_name.split(' ')[0];
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userField').textContent = getFieldName(user.field);
+                document.getElementById('userSemester').textContent = `Semester ${user.semester}`;
+                
+                // Update localStorage with latest user data
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.setItem('userEmail', user.email); // Store email for userId
+                
+                // Fetch and display user scores
+                fetchUserExamScores().then(scores => {
+                    updateScoreStatistics(scores);
+                    displayExamScores(scores);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+                // If authentication fails, redirect to login
+                localStorage.removeItem('token');
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            });
         });
         
+        // Helper function to convert field code to full name - same as in main.js
+        function getFieldName(fieldCode) {
+            const fieldMap = {
+                'smi': 'Computer Science',
+                'sma': 'Mathematics',
+                'bcg': 'Biology & Geology',
+                'spa': 'Physics'
+            };
+            
+            return fieldMap[fieldCode.toLowerCase()] || fieldCode;
+        }
+        
         // Calculate and display score statistics
-        function updateScoreStatistics() {
-            const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const userId = currentUserData.email || 'anonymous';
-            
-            // Get scores for this user
-            const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
-            const scores = allUserScores[userId] || [];
-            
+        function updateScoreStatistics(scores) {
             // Update exam count
             document.getElementById('examsTaken').textContent = scores.length;
             
@@ -156,6 +189,10 @@
                 // Find highest score
                 const highestScore = Math.max(...scores.map(score => score.score));
                 document.getElementById('highestScore').textContent = `${highestScore}%`;
+            } else {
+                // No scores
+                document.getElementById('avgScore').textContent = '0%';
+                document.getElementById('highestScore').textContent = '0%';
             }
         }
     </script>

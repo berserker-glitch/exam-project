@@ -61,42 +61,34 @@ document.addEventListener('DOMContentLoaded', function() {
 // Check authentication state
 async function checkAuth() {
     const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('currentUser');
     
-    if (token && storedUser) {
+    if (token) {
         try {
-            // TEMPORARY: Skip token verification since backend API is not yet implemented
-            // Just use the stored user data
-            currentUser = JSON.parse(storedUser);
-            updateUIForAuthenticatedUser();
-            
-            // Uncomment once backend is ready
-            /*
-            const response = await fetch('/api/auth/verify', {
+            // Use token to fetch current user data
+            const response = await fetch(`${API_URL}/users/me`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             
-            if (response.ok) {
-                currentUser = await response.json();
-                updateUIForAuthenticatedUser();
-            } else {
-                // Token invalid, clear and redirect to login
-                localStorage.removeItem('token');
-                localStorage.removeItem('currentUser');
-                redirectToLogin();
+            if (!response.ok) {
+                throw new Error('Authentication failed');
             }
-            */
+            
+            // Get the latest user data
+            const userData = await response.json();
+            currentUser = userData;
+            
+            // Update stored user data
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            
+            updateUIForAuthenticatedUser();
         } catch (error) {
             console.error('Auth verification failed:', error);
-            // Continue as if logged in for development purposes
-            if (storedUser) {
-                currentUser = JSON.parse(storedUser);
-                updateUIForAuthenticatedUser();
-            } else {
-                redirectToLogin();
-            }
+            // Auth failed, redirect to login
+            localStorage.removeItem('token');
+            localStorage.removeItem('currentUser');
+            redirectToLogin();
         }
     } else {
         // No token, redirect to login page if not already there
@@ -126,7 +118,7 @@ function updateUIForAuthenticatedUser() {
     // Update username display if element exists
     const userNameElement = document.getElementById('userName');
     if (userNameElement && currentUser) {
-        userNameElement.textContent = currentUser.name || 'User';
+        userNameElement.textContent = currentUser.first_name || currentUser.full_name.split(' ')[0] || 'User';
     }
     
     // Update user info if elements exist
@@ -151,6 +143,12 @@ function updateUIForAuthenticatedUser() {
             userSemesterElement.textContent = 'Not specified';
         }
     }
+    
+    // Update email if that element exists
+    const userEmailElement = document.getElementById('userEmail');
+    if (userEmailElement && currentUser) {
+        userEmailElement.textContent = currentUser.email || 'Not specified';
+    }
 }
 
 // Helper function to convert field code to full name
@@ -171,78 +169,84 @@ function initializeDashboard() {
 }
 
 // Fetch user exam scores
-async function fetchUserExamScores() {
-    try {
-        // Get the current user ID to isolate scores
-        const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        const userId = currentUserData.email || '';
-        
-        if (!userId) {
-            console.warn('No user ID found, cannot fetch scores');
-            return;
-        }
-        
-        // TEMPORARY FALLBACK: Fetch from localStorage since backend API is not yet implemented
-        // First try the new format (user-specific scores)
-        const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
-        
-        if (allUserScores[userId]) {
-            // We found user-specific scores, use them
-            displayExamScores(allUserScores[userId]);
-            return;
-        }
-        
-        // Fall back to the old format, but filter by user ID
-        const userScores = JSON.parse(localStorage.getItem('userScores') || '[]');
-        const filteredScores = userScores.filter(score => score.userId === userId);
-        displayExamScores(filteredScores);
-        
-        // Skip the API call for now
-        
-        // Uncomment this block once the backend API is ready
-        /*
-        const response = await fetch('/api/exams/scores', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-
-        if (response.ok) {
-            const scores = await response.json();
-            displayExamScores(scores);
-        } else {
-            console.error('Failed to fetch exam scores');
-        }
-        */
-    } catch (error) {
-        console.error('Error fetching user exam scores:', error);
+function fetchUserExamScores() {
+    const userId = localStorage.getItem('userEmail');
+    if (!userId) {
+        console.error('No user email found in localStorage');
+        return [];
     }
+
+    // Get token for authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.warn('No authentication token found, using localStorage as fallback');
+
+        // Try using the new user-specific format first
+        const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
+        const userScores = allUserScores[userId] || [];
+        
+        if (userScores.length > 0) {
+            return userScores;
+        }
+        
+        // Fall back to the old format if no user-specific scores found
+        // Filter scores that belong to the current user
+        const oldFormatScores = JSON.parse(localStorage.getItem('userScores') || '[]');
+        return oldFormatScores.filter(score => score.userId === userId || !score.userId);
+    }
+
+    // Attempt to fetch from server first
+    return fetch('/api/exams/scores', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch scores from server');
+        }
+        return response.json();
+    })
+    .then(data => {
+        return data.scores || [];
+    })
+    .catch(error => {
+        console.error('Error fetching scores from server:', error);
+        
+        // Fallback to localStorage if server request fails
+        const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
+        const userScores = allUserScores[userId] || [];
+        
+        if (userScores.length > 0) {
+            return userScores;
+        }
+        
+        // Fall back to the old format if needed
+        const oldFormatScores = JSON.parse(localStorage.getItem('userScores') || '[]');
+        return oldFormatScores.filter(score => score.userId === userId || !score.userId);
+    });
 }
 
 // Display exam scores in the table
 function displayExamScores(scores) {
-    console.log('Displaying scores:', scores);
+    const tableBody = document.getElementById('exam-scores-body');
+    const noScoresMessage = document.getElementById('no-scores-message');
     
-    // Get the table body element
-    const tableBody = document.getElementById('examScoresTable').querySelector('tbody');
-    
-    // Clear existing rows
+    // Clear existing content
     tableBody.innerHTML = '';
     
     if (!scores || scores.length === 0) {
-        // No scores available, show a message
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td colspan="4" class="no-scores">
-                <div class="empty-scores">
-                    <i class="fas fa-clipboard-list"></i>
-                    <p>No exams taken yet</p>
-                    <a href="take_exam.html" class="btn btn-primary">Take Your First Exam</a>
-                </div>
-            </td>
-        `;
-        tableBody.appendChild(row);
+        // Show empty state message
+        if (noScoresMessage) {
+            noScoresMessage.style.display = 'flex';
+        }
         return;
+    }
+    
+    // Hide empty state message if there are scores
+    if (noScoresMessage) {
+        noScoresMessage.style.display = 'none';
     }
     
     // Sort scores by date (most recent first)
@@ -256,23 +260,24 @@ function displayExamScores(scores) {
         
         // Format date
         const date = new Date(score.dateTaken);
-        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const formattedDate = date.toLocaleDateString();
+        const formattedTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         // Determine status class for styling
-        const statusClass = score.status === 'Passed' ? 'status-passed' : 'status-failed';
+        const statusClass = score.score >= 50 ? 'status-passed' : 'status-failed';
+        const status = score.score >= 50 ? 'Passed' : 'Failed';
         
-        // Add timeTaken display if available
-        let timeInfo = '';
+        // Format time taken
+        let timeTaken = '';
         if (score.timeTaken) {
             const minutes = Math.floor(score.timeTaken / 60);
             const seconds = score.timeTaken % 60;
-            timeInfo = `<div class="time-taken">${minutes}m ${seconds}s</div>`;
+            timeTaken = `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
         }
         
         row.innerHTML = `
             <td>
                 <div class="exam-title">${score.examTitle || 'Untitled Exam'}</div>
-                ${timeInfo}
             </td>
             <td>
                 <div class="score-cell">
@@ -282,21 +287,12 @@ function displayExamScores(scores) {
                 </div>
             </td>
             <td>${formattedDate}</td>
-            <td><span class="status-badge ${statusClass}">${score.status}</span></td>
+            <td>${timeTaken}</td>
+            <td><span class="status-badge ${statusClass}">${status}</span></td>
         `;
         
         tableBody.appendChild(row);
     });
-    
-    // Helper function to get score class based on score value
-    function getScoreClass(score) {
-        if (score >= 90) return 'score-excellent';
-        if (score >= 80) return 'score-great';
-        if (score >= 70) return 'score-good';
-        if (score >= 60) return 'score-fair';
-        if (score >= 50) return 'score-pass';
-        return 'score-fail';
-    }
 }
 
 // Logout function
@@ -383,18 +379,25 @@ async function validateLogin(event) {
     }
 
     try {
-        // TEMPORARY: Mock login for development
-        // Store token and user data
-        const token = "mock_token_" + Date.now();
-        const user = {
-            name: email.split('@')[0],
-            email: email,
-            field: "Computer Science",
-            year: "2nd Year"
-        };
+        // Send real login request to the API
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
         
-        localStorage.setItem('token', token);
-        localStorage.setItem('currentUser', JSON.stringify(user));
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Login failed');
+        }
+        
+        const data = await response.json();
+        
+        // Store the JWT token and user data in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
         
         // Redirect to dashboard
         redirectToDashboard();
@@ -402,7 +405,7 @@ async function validateLogin(event) {
         return false;
     } catch (error) {
         console.error('Login error:', error);
-        alert('Error during login. Please try again.');
+        alert('Login failed: ' + error.message);
     }
     return false;
 }
@@ -503,6 +506,7 @@ async function validateSignup(event) {
     }
 
     try {
+        // Try to register the user
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: {
@@ -519,9 +523,8 @@ async function validateSignup(event) {
             })
         });
 
-        const data = await response.json();
-
         if (!response.ok) {
+            const data = await response.json();
             if (data.missing) {
                 alert(`Missing required fields: ${data.missing.join(', ')}`);
             } else if (data.error === 'ER_NO_SUCH_TABLE') {
@@ -532,8 +535,43 @@ async function validateSignup(event) {
             return false;
         }
 
-        alert('Registration successful! Please login with your credentials.');
-        window.location.href = 'views/login.html';
+        // Registration successful, now login
+        // For development, fetch user data from API
+        const usersResponse = await fetch('/api/users');
+        
+        if (!usersResponse.ok) {
+            throw new Error('Failed to fetch user data after registration');
+        }
+        
+        const users = await usersResponse.json();
+        
+        // We'll use the first user for development
+        // In production, the registration or login would return the specific user
+        const dbUser = users.length > 0 ? users[0] : null;
+        
+        if (!dbUser) {
+            throw new Error('No users found in database after registration');
+        }
+        
+        // Store token and user data
+        const token = "mock_token_" + Date.now();
+        
+        // Use the database user data but keep the entered email
+        const user = {
+            full_name: dbUser.full_name,
+            first_name: dbUser.first_name, 
+            email: email, // Keep the email the user entered
+            field: dbUser.field,
+            semester: dbUser.semester
+        };
+        
+        localStorage.setItem('token', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        // Redirect to dashboard
+        redirectToDashboard();
+        
+        return false;
     } catch (error) {
         console.error('Registration error:', error);
         alert('Error during registration. Please try again or contact support if the problem persists.');
@@ -593,4 +631,16 @@ function togglePasswordVisibility(inputId) {
     if (container) {
         container.classList.toggle('show-password');
     }
+}
+
+/* 
+ * Helper function to get score class based on score value
+ */
+function getScoreClass(score) {
+    if (score >= 90) return 'score-excellent';
+    if (score >= 80) return 'score-great';
+    if (score >= 70) return 'score-good';
+    if (score >= 60) return 'score-fair';
+    if (score >= 50) return 'score-pass';
+    return 'score-fail';
 }
