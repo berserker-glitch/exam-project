@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Exam Platform</title>
+    <title>Tableau de Bord - Plateforme d'Examen</title>
     <link rel="stylesheet" href="../public/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -28,58 +28,49 @@
 <body>
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <h1>Welcome, <span id="userName">User</span></h1>
-            <div class="user-session-info">
-                <p>Logged in as: <span id="userEmail">-</span></p>
+            <div class="user-header-info">
+                <h1>Bienvenue, <span id="userName">Utilisateur</span></h1>
+                <div class="user-details-row">
+                    <div class="user-session-info">
+                        <p>Connecté en tant que : <span id="userEmail">-</span></p>
+                    </div>
+                    <div class="user-field-info">
+                        <span class="info-label"><i class="fas fa-book"></i> Filière : <span class="info-value" id="userField">-</span></span>
+                        <span class="info-label"><i class="fas fa-calendar-alt"></i> Semestre : <span class="info-value" id="userSemester">-</span></span>
+                    </div>
+                </div>
             </div>
             <!-- Keep the original logout link but with our overridden function -->
             <a href="#" onclick="logout(event)" class="logout-link">
-                <i class="fas fa-sign-out-alt"></i> Logout
+                <i class="fas fa-sign-out-alt"></i> Déconnexion
             </a>
         </div>
         
         <div class="dashboard-content">
-            <div class="user-info-card">
-                <div class="user-info-header">
-                    <i class="fas fa-user-graduate"></i>
-                    <h2>Your Information</h2>
-                </div>
-                <div class="user-info-content">
-                    <div class="info-item">
-                        <span class="info-label"><i class="fas fa-book"></i> Field:</span>
-                        <span class="info-value" id="userField">-</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label"><i class="fas fa-calendar-alt"></i> Semester:</span>
-                        <span class="info-value" id="userSemester">-</span>
-                    </div>
-                </div>
-            </div>
-
             <div class="exam-scores">
-                <h2><i class="fas fa-chart-bar"></i> Your Exam Scores</h2>
+                <h2><i class="fas fa-chart-bar"></i> Vos Résultats d'Examens</h2>
                 <div id="scoresSummary" class="scores-summary">
                     <div class="score-stat">
                         <span class="stat-number" id="examsTaken">0</span>
-                        <span class="stat-label">Exams Taken</span>
+                        <span class="stat-label">Examens Passés</span>
                     </div>
                     <div class="score-stat">
                         <span class="stat-number" id="avgScore">0%</span>
-                        <span class="stat-label">Average Score</span>
+                        <span class="stat-label">Score Moyen</span>
                     </div>
                     <div class="score-stat">
                         <span class="stat-number" id="highestScore">0%</span>
-                        <span class="stat-label">Highest Score</span>
+                        <span class="stat-label">Meilleur Score</span>
                     </div>
                 </div>
                 <table id="exam-scores-table">
                     <thead>
                         <tr>
-                            <th>Exam Title</th>
+                            <th>Titre de l'Examen</th>
                             <th>Score</th>
-                            <th>Date Taken</th>
-                            <th>Time</th>
-                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Statut</th>
                         </tr>
                     </thead>
                     <tbody id="exam-scores-body">
@@ -88,22 +79,22 @@
                 </table>
                 <div id="no-scores-message" class="empty-scores" style="display: none;">
                     <i class="fas fa-clipboard-list"></i>
-                    <p>No exams taken yet</p>
-                    <a href="take_exam.html" class="btn btn-primary">Take Your First Exam</a>
+                    <p>Aucun examen passé pour le moment</p>
+                    <a href="take_exam.html" class="btn btn-primary">Passer Votre Premier Examen</a>
                 </div>
             </div>
 
             <div class="action-cards">
                 <a href="create_exam.html" class="action-card create-exam">
                     <i class="fas fa-edit"></i>
-                    <h3>Create an Exam</h3>
-                    <p>Design and publish new exams</p>
+                    <h3>Créer un Examen</h3>
+                    <p>Concevoir et publier de nouveaux examens</p>
                 </a>
                 
                 <a href="take_exam.html" class="action-card take-exam">
                     <i class="fas fa-pencil-alt"></i>
-                    <h3>Pass an Exam</h3>
-                    <p>Take available exams</p>
+                    <h3>Passer un Examen</h3>
+                    <p>Passer les examens disponibles</p>
                 </a>
             </div>
         </div>
@@ -142,7 +133,7 @@
                 document.getElementById('userName').textContent = user.first_name || user.full_name.split(' ')[0];
                 document.getElementById('userEmail').textContent = user.email;
                 document.getElementById('userField').textContent = getFieldName(user.field);
-                document.getElementById('userSemester').textContent = `Semester ${user.semester}`;
+                document.getElementById('userSemester').textContent = `Semestre ${user.semester}`;
                 
                 // Update localStorage with latest user data
                 localStorage.setItem('currentUser', JSON.stringify(user));
@@ -166,10 +157,10 @@
         // Helper function to convert field code to full name - same as in main.js
         function getFieldName(fieldCode) {
             const fieldMap = {
-                'smi': 'Computer Science',
-                'sma': 'Mathematics',
-                'bcg': 'Biology & Geology',
-                'spa': 'Physics'
+                'smi': 'Informatique',
+                'sma': 'Mathématiques',
+                'bcg': 'Biologie & Géologie',
+                'spa': 'Physique'
             };
             
             return fieldMap[fieldCode.toLowerCase()] || fieldCode;

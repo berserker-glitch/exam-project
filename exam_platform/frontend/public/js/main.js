@@ -1,29 +1,29 @@
 /**
- * Main JavaScript Module
+ * Module JavaScript Principal
  * 
- * This module handles all client-side functionality including:
- * - User authentication (login/signup)
- * - Form validation
- * - Password strength checking
- * - Dashboard initialization
- * - API communication
- * - Session management
+ * Ce module gère toutes les fonctionnalités côté client, notamment :
+ * - Authentification des utilisateurs (connexion/inscription)
+ * - Validation des formulaires
+ * - Vérification de la force du mot de passe
+ * - Initialisation du tableau de bord
+ * - Communication avec l'API
+ * - Gestion des sessions
  * 
- * API Integration:
- * - Uses fetch API for HTTP requests
- * - Handles JWT token-based authentication
- * - Manages user session storage
+ * Intégration API :
+ * - Utilise l'API fetch pour les requêtes HTTP
+ * - Gère l'authentification basée sur les jetons JWT
+ * - Gère le stockage des sessions utilisateur
  * 
- * Security Features:
- * - Client-side input validation
- * - Password strength requirements
- * - Secure token storage
- * - Session management
+ * Fonctionnalités de sécurité :
+ * - Validation des entrées côté client
+ * - Exigences de force du mot de passe
+ * - Stockage sécurisé des jetons
+ * - Gestion des sessions
  */
 
 const API_URL = 'http://localhost:3000/api';
 
-// Mock database for frontend demonstration (in real app, this would be server-side)
+// Base de données fictive pour la démonstration frontend (dans une application réelle, elle serait côté serveur)
 const mockDatabase = {
     users: [
         {
@@ -36,29 +36,29 @@ const mockDatabase = {
     ]
 };
 
-// Main.js - Core functionality for the Exam Platform
+// Main.js - Fonctionnalité principale pour la Plateforme d'Examen
 
-// Global variables
+// Variables globales
 let currentUser = null;
 
 // DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Check authentication state
+    // Vérifier l'état d'authentification
     checkAuth();
     
-    // Initialize dashboard if on dashboard page
+    // Initialiser le tableau de bord si on est sur la page du tableau de bord
     if (document.querySelector('.dashboard-container')) {
         initializeDashboard();
     }
     
-    // Add logout handler
+    // Ajouter le gestionnaire de déconnexion
     const logoutBtn = document.querySelector('.logout-link');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', logout);
     }
 });
 
-// Check authentication state
+// Vérifier l'état d'authentification
 async function checkAuth() {
     const token = localStorage.getItem('token');
     
@@ -99,7 +99,7 @@ async function checkAuth() {
     }
 }
 
-// Check if current page is a public page (login, signup, index)
+// Vérifier si la page actuelle est une page publique (connexion, inscription, index)
 function isPublicPage(path) {
     const publicPages = [
         '/login.html', 
@@ -113,19 +113,19 @@ function isPublicPage(path) {
     return publicPages.some(page => path.endsWith(page));
 }
 
-// Update UI for authenticated user
+// Mettre à jour l'interface utilisateur pour un utilisateur authentifié
 function updateUIForAuthenticatedUser() {
     // Update username display if element exists
     const userNameElement = document.getElementById('userName');
     if (userNameElement && currentUser) {
-        userNameElement.textContent = currentUser.first_name || currentUser.full_name.split(' ')[0] || 'User';
+        userNameElement.textContent = currentUser.first_name || currentUser.full_name.split(' ')[0] || 'Utilisateur';
     }
     
     // Update user info if elements exist
     const userFieldElement = document.getElementById('userField');
     if (userFieldElement && currentUser) {
         // Convert field code to proper name
-        const fieldName = getFieldName(currentUser.field || 'Not specified');
+        const fieldName = getFieldName(currentUser.field || 'Non spécifié');
         userFieldElement.textContent = fieldName;
     }
     
@@ -133,42 +133,42 @@ function updateUIForAuthenticatedUser() {
     if (userSemesterElement && currentUser) {
         // If semester is available, use it
         if (currentUser.semester) {
-            userSemesterElement.textContent = `Semester ${currentUser.semester}`;
+            userSemesterElement.textContent = `Semestre ${currentUser.semester}`;
         } 
         // For backward compatibility
         else if (currentUser.year) {
-            userSemesterElement.textContent = `Semester ${currentUser.year}`;
+            userSemesterElement.textContent = `Semestre ${currentUser.year}`;
         } 
         else {
-            userSemesterElement.textContent = 'Not specified';
+            userSemesterElement.textContent = 'Non spécifié';
         }
     }
     
     // Update email if that element exists
     const userEmailElement = document.getElementById('userEmail');
     if (userEmailElement && currentUser) {
-        userEmailElement.textContent = currentUser.email || 'Not specified';
+        userEmailElement.textContent = currentUser.email || 'Non spécifié';
     }
 }
 
-// Helper function to convert field code to full name
+// Fonction utilitaire pour convertir le code de filière en nom complet
 function getFieldName(fieldCode) {
     const fieldMap = {
-        'smi': 'Computer Science',
-        'sma': 'Mathematics',
-        'bcg': 'Biology & Geology',
-        'spa': 'Physics'
+        'smi': 'Informatique',
+        'sma': 'Mathématiques',
+        'bcg': 'Biologie & Géologie',
+        'spa': 'Physique'
     };
     
     return fieldMap[fieldCode.toLowerCase()] || fieldCode;
 }
 
-// Initialize dashboard
+// Initialiser le tableau de bord
 function initializeDashboard() {
     fetchUserExamScores();
 }
 
-// Fetch user exam scores
+// Récupérer les scores d'examen de l'utilisateur
 function fetchUserExamScores() {
     const userId = localStorage.getItem('userEmail');
     if (!userId) {
@@ -228,7 +228,7 @@ function fetchUserExamScores() {
     });
 }
 
-// Display exam scores in the table
+// Afficher les scores d'examen dans le tableau
 function displayExamScores(scores) {
     const tableBody = document.getElementById('exam-scores-body');
     const noScoresMessage = document.getElementById('no-scores-message');
@@ -265,7 +265,7 @@ function displayExamScores(scores) {
         
         // Determine status class for styling
         const statusClass = score.score >= 50 ? 'status-passed' : 'status-failed';
-        const status = score.score >= 50 ? 'Passed' : 'Failed';
+        const status = score.score >= 50 ? 'Réussi' : 'Échoué';
         
         // Format time taken
         let timeTaken = '';
@@ -277,7 +277,7 @@ function displayExamScores(scores) {
         
         row.innerHTML = `
             <td>
-                <div class="exam-title">${score.examTitle || 'Untitled Exam'}</div>
+                <div class="exam-title">${score.examTitle || 'Examen sans titre'}</div>
             </td>
             <td>
                 <div class="score-cell">
@@ -348,17 +348,17 @@ function redirectToDashboard() {
 }
 
 /**
- * Login Form Validation and Submission
+ * Validation et Soumission du Formulaire de Connexion
  * 
- * Validates user credentials and handles login process:
- * 1. Validates email format
- * 2. Ensures password is provided
- * 3. Sends login request to API
- * 4. Stores JWT token and user data
- * 5. Redirects to dashboard on success
+ * Valide les identifiants utilisateur et gère le processus de connexion :
+ * 1. Valide le format de l'email
+ * 2. S'assure que le mot de passe est fourni
+ * 3. Envoie la demande de connexion à l'API
+ * 4. Stocke le jeton JWT et les données utilisateur
+ * 5. Redirige vers le tableau de bord en cas de succès
  * 
- * @param {Event} event - Form submission event
- * @returns {boolean} False to prevent form submission
+ * @param {Event} event - Événement de soumission du formulaire
+ * @returns {boolean} False pour empêcher la soumission du formulaire
  */
 async function validateLogin(event) {
     event.preventDefault();
@@ -367,14 +367,14 @@ async function validateLogin(event) {
 
     // Basic validation
     if (!email || !password) {
-        alert('Please fill in all fields');
+        alert('Veuillez remplir tous les champs');
         return false;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-        alert('Please enter a valid email address');
+        alert('Veuillez entrer une adresse email valide');
         return false;
     }
 
@@ -390,7 +390,7 @@ async function validateLogin(event) {
         
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Login failed');
+            throw new Error(errorData.message || 'Échec de connexion');
         }
         
         const data = await response.json();
@@ -405,24 +405,24 @@ async function validateLogin(event) {
         return false;
     } catch (error) {
         console.error('Login error:', error);
-        alert('Login failed: ' + error.message);
+        alert('Échec de connexion: ' + error.message);
     }
     return false;
 }
 
 /**
- * Password Strength Checker
+ * Vérificateur de Force du Mot de Passe
  * 
- * Validates password against security requirements:
- * - Minimum 8 characters
- * - Contains lowercase letter
- * - Contains uppercase letter
- * - Contains number
- * - Contains special character
+ * Valide le mot de passe par rapport aux exigences de sécurité :
+ * - Minimum 8 caractères
+ * - Contient une lettre minuscule
+ * - Contient une lettre majuscule
+ * - Contient un chiffre
+ * - Contient un caractère spécial
  * 
- * Updates UI to show which requirements are met
+ * Met à jour l'interface utilisateur pour montrer quelles exigences sont satisfaites
  * 
- * @param {string} password - Password to check
+ * @param {string} password - Mot de passe à vérifier
  */
 function checkPassword(password) {
     const requirements = {
@@ -446,18 +446,18 @@ function checkPassword(password) {
 }
 
 /**
- * Signup Form Validation and Submission
+ * Validation et Soumission du Formulaire d'Inscription
  * 
- * Validates user input and handles registration process:
- * 1. Validates all required fields
- * 2. Checks email format
- * 3. Validates age requirement
- * 4. Checks password strength
- * 5. Verifies password confirmation
- * 6. Submits registration to API
+ * Valide les entrées de l'utilisateur et gère le processus d'inscription :
+ * 1. Valide tous les champs obligatoires
+ * 2. Vérifie le format de l'email
+ * 3. Valide l'exigence d'âge
+ * 4. Vérifie la force du mot de passe
+ * 5. Vérifie la confirmation du mot de passe
+ * 6. Soumet l'inscription à l'API
  * 
- * @param {Event} event - Form submission event
- * @returns {boolean} False to prevent form submission
+ * @param {Event} event - Événement de soumission du formulaire
+ * @returns {boolean} False pour empêcher la soumission du formulaire
  */
 async function validateSignup(event) {
     event.preventDefault();
@@ -472,14 +472,14 @@ async function validateSignup(event) {
 
     // Basic validation
     if (!fullName || !email || !dob || !sex || !filiere || !studyYear || !password || !confirmPassword) {
-        alert('Please fill in all fields');
+        alert('Veuillez remplir tous les champs');
         return false;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-        alert('Please enter a valid email address');
+        alert('Veuillez entrer une adresse email valide');
         return false;
     }
 
@@ -488,20 +488,20 @@ async function validateSignup(event) {
     const today = new Date();
     const age = today.getFullYear() - dobDate.getFullYear();
     if (age < 16) {
-        alert('You must be at least 16 years old to register');
+        alert('Vous devez avoir au moins 16 ans pour vous inscrire');
         return false;
     }
 
     // Password validation
     const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
     if (!passwordRegex.test(password)) {
-        alert('Password does not meet requirements');
+        alert('Le mot de passe ne répond pas aux exigences');
         return false;
     }
 
     // Confirm password
     if (password !== confirmPassword) {
-        alert('Passwords do not match');
+        alert('Les mots de passe ne correspondent pas');
         return false;
     }
 
@@ -526,11 +526,11 @@ async function validateSignup(event) {
         if (!response.ok) {
             const data = await response.json();
             if (data.missing) {
-                alert(`Missing required fields: ${data.missing.join(', ')}`);
+                alert(`Champs obligatoires manquants : ${data.missing.join(', ')}`);
             } else if (data.error === 'ER_NO_SUCH_TABLE') {
-                alert('Database setup required. Please contact administrator.');
+                alert('Configuration de la base de données requise. Veuillez contacter l\'administrateur.');
             } else {
-                alert(data.message || 'Registration failed');
+                alert(data.message || 'L\'inscription a échoué');
             }
             return false;
         }
@@ -574,7 +574,7 @@ async function validateSignup(event) {
         return false;
     } catch (error) {
         console.error('Registration error:', error);
-        alert('Error during registration. Please try again or contact support if the problem persists.');
+        alert('Erreur lors de l\'inscription. Veuillez réessayer ou contacter le support si le problème persiste.');
     }
     return false;
 }

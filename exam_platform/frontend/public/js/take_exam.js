@@ -22,8 +22,9 @@ let examDuration = 0;
 let examTimer;
 let currentUser = null;
 let examId = null;
-let examTitle = "Exam"; // Default title
+let examTitle = "Examen"; // Default title
 let timeSpent = 0; // Track time spent on the exam
+let examSubmitted = false;
 
 // Event listeners
 registrationForm.addEventListener('submit', registerUser);
@@ -93,16 +94,16 @@ async function registerUser(event) {
     });
 
     if (response.ok) {
-      showSuccessMessage('Registration successful! Please login.');
+      showSuccessMessage('Inscription réussie ! Veuillez vous connecter.');
       loginForm.reset();
       showLoginForm();
     } else {
       const error = await response.json();
-      showErrorMessage(`Registration failed: ${error.message}`);
+      showErrorMessage(`Échec de l'inscription : ${error.message}`);
     }
   } catch (error) {
     console.error('Error during registration:', error);
-    showErrorMessage('An error occurred during registration. Please try again.');
+    showErrorMessage('Une erreur est survenue lors de l\'inscription. Veuillez réessayer.');
   }
 }
 
@@ -164,7 +165,7 @@ async function loginUser(event, emailOverride, passwordOverride) {
     return; // Skip the API call
   } catch (error) {
     console.error('Error during mock login:', error);
-    showErrorMessage('An error occurred during login simulation. Please try again.');
+    showErrorMessage('Une erreur est survenue lors de la simulation de connexion. Veuillez réessayer.');
     return;
   }
 
@@ -189,11 +190,11 @@ async function loginUser(event, emailOverride, passwordOverride) {
       skipGeolocation();
     } else {
       const error = await response.json();
-      showErrorMessage(`Login failed: ${error.message}`);
+      showErrorMessage(`Échec de connexion : ${error.message}`);
     }
   } catch (error) {
     console.error('Error during login:', error);
-    showErrorMessage('An error occurred during login. Please try again.');
+    showErrorMessage('Une erreur est survenue lors de la connexion. Veuillez réessayer.');
   }
   */
 }
@@ -211,7 +212,7 @@ function skipGeolocation() {
       examQuestionsSection.style.display = 'block';
     }).catch(error => {
       console.error('Error fetching exam questions:', error);
-      showErrorMessage('Failed to load exam questions. Please try again or contact support.');
+      showErrorMessage('Échec du chargement des questions d\'examen. Veuillez réessayer ou contacter le support.');
     });
   } else {
     // No exam link, show the exam link input section
@@ -219,73 +220,47 @@ function skipGeolocation() {
   }
 }
 
-// Original geolocation function - now disabled and commented out for reference
-/*
-async function activateGeolocation() {
-  if ('geolocation' in navigator) {
-    try {
-      navigator.geolocation.getCurrentPosition(
-        async position => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          await sendLocationToBackend(latitude, longitude);
-          geolocationActivationSection.style.display = 'none';
-          
-          // Check if we have an exam link in the URL
-          const examLink = getExamLinkFromUrl();
-          if (examLink) {
-            // Direct exam access via URL
-            await fetchExamQuestions(examLink);
-            examQuestionsSection.style.display = 'block';
-          } else {
-            // Show exam link input
-            examLinkSection.style.display = 'block';
-          }
-        },
-        error => {
-          console.error('Error retrieving geolocation:', error);
-          
-          // Show appropriate error message based on error code
-          let errorMessage = 'Failed to retrieve your location. ';
-          
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage += 'You denied permission to access your location. Please enable location access in your browser settings and try again.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage += 'Location information is unavailable. Please check your device settings or try another device.';
-              break;
-            case error.TIMEOUT:
-              errorMessage += 'The request to get your location timed out. Please try again.';
-              break;
-            default:
-              errorMessage += 'Please allow location access or contact support.';
-          }
-          
-          showGeolocationError(errorMessage);
-        },
-        // Additional geolocation options
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+// Geolocation can be re-enabled if needed
+function getGeolocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const { latitude, longitude } = position.coords;
+        console.log(`User location: ${latitude}, ${longitude}`);
+        sendLocationToBackend(latitude, longitude);
+        skipGeolocation();
+      },
+      error => {
+        console.error('Error retrieving geolocation:', error);
+        
+        // Show appropriate error message based on error code
+        let errorMessage = 'Impossible de récupérer votre position. ';
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += 'Vous avez refusé l\'accès à votre position. Veuillez activer l\'accès à la localisation dans les paramètres de votre navigateur et réessayer.';
+            break;
+            
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += 'Les informations de localisation ne sont pas disponibles. Veuillez vérifier les paramètres de votre appareil ou essayer un autre appareil.';
+            break;
+            
+          case error.TIMEOUT:
+            errorMessage += 'La demande de géolocalisation a expiré. Veuillez réessayer.';
+            break;
+            
+          default:
+            errorMessage += 'Veuillez autoriser l\'accès à la localisation ou contacter le support.';
         }
-      );
-    } catch (error) {
-      console.error('Error in geolocation process:', error);
-      showGeolocationError('An error occurred with geolocation. Please try again or contact support.');
-    }
+        
+        showGeolocationError(errorMessage);
+      },
+      { timeout: 10000 }
+    );
   } else {
     console.error('Geolocation is not supported by this browser.');
-    showGeolocationError('Geolocation is not supported by your browser. Please use a different browser or contact support.');
+    showGeolocationError('La géolocalisation n\'est pas prise en charge par votre navigateur. Veuillez utiliser un autre navigateur ou contacter le support.');
   }
-}
-*/
-
-// Dummy function for geolocation - we're not actually sending location data
-async function sendLocationToBackend(latitude, longitude) {
-  console.log('Geolocation bypassed. Location data would normally be sent to backend.');
-  return true;
 }
 
 // Function to show geolocation error with retry button
@@ -301,19 +276,26 @@ function showGeolocationError(message) {
   
   errorContainer.innerHTML = `
     <p class="error-message">${message}</p>
-    <button id="retryGeolocation" class="btn btn-primary">Try Again</button>
-    <p class="geolocation-help">
-      <strong>Need help?</strong> Make sure:
+    <button type="button" class="btn btn-primary" id="retryGeolocation">
+      <i class="fas fa-redo"></i> Réessayer
+    </button>
+    <button type="button" class="btn btn-secondary" id="skipGeolocation">
+      <i class="fas fa-forward"></i> Passer
+    </button>
+    <div class="geolocation-help">
+      <p>Si vous continuez à avoir des problèmes :</p>
       <ul>
-        <li>Location services are enabled on your device</li>
-        <li>You've given permission to this site to use your location</li>
-        <li>You're not using a VPN that might hide your location</li>
+        <li>Vérifiez que la localisation est activée sur votre appareil</li>
+        <li>Vérifiez les paramètres de permission de votre navigateur</li>
+        <li>Essayez d'utiliser un autre navigateur</li>
+        <li>Contactez le support technique</li>
       </ul>
-    </p>
+    </div>
   `;
   
-  // Add event listener for retry button
-  document.getElementById('retryGeolocation').addEventListener('click', skipGeolocation);
+  // Add event listeners to buttons
+  document.getElementById('retryGeolocation').addEventListener('click', getGeolocation);
+  document.getElementById('skipGeolocation').addEventListener('click', skipGeolocation);
 }
 
 function showErrorMessage(message) {
@@ -362,17 +344,17 @@ async function handleExamLinkSubmit(event) {
   const examLink = document.getElementById('examLink').value.trim();
   
   if (!examLink) {
-    showErrorMessage('Please enter a valid exam link.');
+    showErrorMessage('Veuillez saisir un lien d\'examen valide.');
     return;
   }
   
   try {
-    await fetchExamQuestions(examLink);
+  await fetchExamQuestions(examLink);
   examLinkSection.style.display = 'none';
   examQuestionsSection.style.display = 'block';
   } catch (error) {
     console.error('Error fetching exam questions:', error);
-    showErrorMessage('Failed to load the exam. Please check the link and try again.');
+    showErrorMessage('Échec du chargement de l\'examen. Veuillez vérifier le lien et réessayer.');
   }
 }
 
@@ -383,7 +365,7 @@ async function fetchExamQuestions(examLink) {
     examId = examLink.split('?exam=')[1];
   }
   
-  // TEMPORARY FALLBACK: Fetch from localStorage since backend API is not yet implemented
+    // TEMPORARY FALLBACK: Fetch from localStorage since backend API is not yet implemented
   try {
     const exams = JSON.parse(localStorage.getItem('exams') || '[]');
     const exam = exams.find(e => e.id === examId);
@@ -395,12 +377,20 @@ async function fetchExamQuestions(examLink) {
     console.log('Found exam:', exam);
     
     // Set up exam data
-      examQuestions = exam.questions;
-    examDuration = 60 * 60; // Default to 60 minutes if not specified
-    examTitle = exam.name || "Exam";
+    examQuestions = exam.questions;
+    
+    // Set exam duration from exam timer (in minutes) or default to 60 minutes
+    if (exam.timer && !isNaN(exam.timer)) {
+      examDuration = exam.timer * 60; // Convert minutes to seconds
+    } else {
+      examDuration = 60 * 60; // Default to 60 minutes if not specified
+      console.warn('No timer found for exam, defaulting to 60 minutes');
+    }
+    
+    examTitle = exam.name || "Examen";
     
     // Set the page title to include the exam name
-    document.title = `Taking: ${examTitle} - Exam Platform`;
+    document.title = `En cours : ${examTitle} - Plateforme d'Examen`;
     
     // Initialize user answers array
     userAnswers = new Array(examQuestions.length).fill(null);
@@ -416,7 +406,7 @@ async function fetchExamQuestions(examLink) {
     return exam;
   } catch (error) {
     console.error('Error fetching exam from localStorage:', error);
-    showErrorMessage('Exam not found. Please check the link and try again.');
+    showErrorMessage('Examen introuvable. Veuillez vérifier le lien et réessayer.');
     throw error;
   }
 }
@@ -430,7 +420,20 @@ function startExamTimer() {
     timerDisplay = document.createElement('div');
     timerDisplay.id = 'examTimer';
     timerDisplay.className = 'exam-timer';
-    examQuestionsSection.prepend(timerDisplay);
+    
+    // Add timer info showing total duration
+    const totalMinutes = Math.floor(examDuration / 60);
+    const timerInfo = document.createElement('div');
+    timerInfo.className = 'timer-info';
+    timerInfo.innerHTML = `<i class="fas fa-info-circle"></i> Cet examen a une limite de temps de ${totalMinutes} minutes`;
+    
+    // Add both elements to the exam section
+    const timerContainer = document.createElement('div');
+    timerContainer.className = 'timer-container';
+    timerContainer.appendChild(timerDisplay);
+    timerContainer.appendChild(timerInfo);
+    
+    examQuestionsSection.prepend(timerContainer);
   }
   
   // Update timer display
@@ -442,7 +445,7 @@ function startExamTimer() {
     const seconds = timeRemaining % 60;
     
     timerDisplay.innerHTML = `
-      <i class="fas fa-clock"></i> Time Remaining: 
+      <i class="fas fa-clock"></i> Temps Restant: 
       ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}
     `;
     
@@ -450,13 +453,21 @@ function startExamTimer() {
     if (timeRemaining <= 300) { // 5 minutes warning
       timerDisplay.classList.add('timer-warning');
       timerDisplay.querySelector('i').className = 'fas fa-exclamation-circle';
+      
+      // Also update the timer container for more emphasis
+      const timerContainer = timerDisplay.closest('.timer-container');
+      if (timerContainer) {
+        timerContainer.style.borderColor = 'var(--error-color)';
+        timerContainer.style.borderWidth = '2px';
+        timerContainer.style.borderStyle = 'solid';
+      }
     } else if (timeRemaining <= 600) { // 10 minutes warning
       timerDisplay.style.color = 'var(--warning-color)';
     }
     
     if (timeRemaining <= 0) {
       clearInterval(examTimer);
-      showErrorMessage('Time is up! Your exam is being submitted automatically.');
+      showErrorMessage('Temps écoulé ! Votre examen est soumis automatiquement.');
       submitExam();
     }
     
@@ -477,7 +488,7 @@ function showQuestion(index) {
     }
 
     currentQuestionIndex = index;
-  const question = examQuestions[index];
+    const question = examQuestions[index];
     
   // Clear previous question
     questionContainer.innerHTML = '';
@@ -490,7 +501,7 @@ function showQuestion(index) {
   const questionHeader = document.createElement('div');
   questionHeader.className = 'question-header';
   questionHeader.innerHTML = `
-    <h3>Question ${index + 1} of ${examQuestions.length}</h3>
+    <h3>Question ${index + 1} sur ${examQuestions.length}</h3>
     <span class="question-points">${question.points} points</span>
   `;
   questionCard.appendChild(questionHeader);
@@ -556,7 +567,7 @@ function showQuestion(index) {
     // Direct answer question
     const answerInput = document.createElement('input');
     answerInput.type = 'text';
-    answerInput.placeholder = 'Your answer...';
+    answerInput.placeholder = 'Votre réponse...';
     answerInput.className = 'question-answer-input';
     
     // Set the previous answer if available
@@ -576,10 +587,10 @@ function showQuestion(index) {
   const navigationHints = document.createElement('div');
   navigationHints.className = 'navigation-hints';
   navigationHints.innerHTML = `
-    <div class="hint"><kbd>←</kbd> Previous</div>
-    <div class="hint"><kbd>→</kbd> Next</div>
-    <div class="hint"><kbd>Enter</kbd> Submit (when on last question)</div>
-    <div class="hint"><kbd>1-9</kbd> Jump to question</div>
+    <div class="hint"><kbd>←</kbd> Précédent</div>
+    <div class="hint"><kbd>→</kbd> Suivant</div>
+    <div class="hint"><kbd>Enter</kbd> Soumettre (sur la dernière question)</div>
+    <div class="hint"><kbd>1-9</kbd> Aller à la question</div>
   `;
   questionCard.appendChild(navigationHints);
   
@@ -616,7 +627,7 @@ function updateQuestionNavigation() {
     examQuestions.forEach((_, index) => {
     const dot = document.createElement('div');
     dot.className = 'nav-dot';
-    
+        
     // Add number inside dot for better navigation
     dot.textContent = index + 1;
         
@@ -641,17 +652,17 @@ function updateQuestionNavigation() {
 
 function updateAnsweredCounter() {
   const answeredCount = userAnswers.filter(answer => answer !== null).length;
-    const totalCount = examQuestions.length;
-    
+  const totalQuestions = examQuestions.length;
+  
   const answeredCounter = document.getElementById('answeredCounter');
-    answeredCounter.textContent = `${answeredCount}/${totalCount} questions answered`;
-    
-  // Add visual indicator if all questions are answered
-    if (answeredCount === totalCount) {
-    answeredCounter.classList.add('all-answered');
-    } else {
-    answeredCounter.classList.remove('all-answered');
-    }
+  if (answeredCounter) {
+    answeredCounter.textContent = `${answeredCount}/${totalQuestions} questions répondues`;
+  }
+  
+  // Show submit button when all questions answered
+  if (answeredCount === totalQuestions) {
+    submitExamButton.style.display = 'block';
+  }
 }
 
 function showNextQuestion() {
@@ -689,36 +700,209 @@ function saveAnswer() {
   userAnswers[currentQuestionIndex] = answer;
   
   // Update the navigation dots
-  updateQuestionNavigation();
+        updateQuestionNavigation();
   
   // Update answered counter
-  updateAnsweredCounter();
+        updateAnsweredCounter();
 }
 
 async function submitExam() {
+  // Prevent double submission
+  if (examSubmitted) {
+    return;
+  }
+  
   // Save the current answer
     saveAnswer();
     
   const unansweredCount = userAnswers.filter(answer => answer === null).length;
-  let confirmMessage = 'Are you sure you want to submit your exam? You cannot change your answers after submission.';
+  let confirmMessage = 'Êtes-vous sûr de vouloir soumettre votre examen ? Vous ne pourrez pas modifier vos réponses après la soumission.';
+  let warningText = '';
   
   if (unansweredCount > 0) {
-    confirmMessage = `Warning: You have ${unansweredCount} unanswered questions. Are you sure you want to submit your exam?`;
+    confirmMessage = 'Êtes-vous sûr de vouloir soumettre votre examen ?';
+    warningText = `Attention : Vous avez ${unansweredCount} question${unansweredCount === 1 ? '' : 's'} sans réponse.`;
   }
   
-  if (!confirm(confirmMessage)) {
-      return;
+  // Create custom confirmation modal
+  showConfirmationModal(confirmMessage, warningText, () => {
+    // This runs when user confirms submission
+    finalizeExamSubmission();
+  });
+}
+
+// Custom confirmation modal for exam submission
+function showConfirmationModal(message, warningText, onConfirm) {
+  // Create modal elements
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.id = 'confirmSubmissionModal';
+  
+  const iconClass = warningText ? 'fa-exclamation-triangle' : 'fa-question-circle';
+  const iconColor = warningText ? 'var(--warning-color)' : 'var(--primary-color)';
+  
+  modal.innerHTML = `
+    <div class="modal-content confirmation-modal">
+      <div class="confirmation-icon">
+        <i class="fas ${iconClass}" style="color: ${iconColor}"></i>
+      </div>
+      <h3>Soumettre l'Examen</h3>
+      <p>${message}</p>
+      ${warningText ? `<p class="warning-text">${warningText}</p>` : ''}
+      <p class="note-text">Vous ne pourrez pas modifier vos réponses après la soumission.</p>
+      <div class="confirmation-buttons">
+        <button id="cancelSubmission" class="btn btn-secondary">
+          <i class="fas fa-times"></i> Annuler
+        </button>
+        <button id="confirmSubmission" class="btn btn-primary">
+          <i class="fas fa-check"></i> Soumettre l'Examen
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to body
+  document.body.appendChild(modal);
+  
+  // Add custom CSS for the confirmation modal
+  const modalStyle = document.createElement('style');
+  modalStyle.textContent = `
+    #confirmSubmissionModal {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      backdrop-filter: blur(3px);
     }
     
-  // Stop the timer
-  clearInterval(examTimer);
+    .confirmation-modal {
+      max-width: 500px;
+      text-align: center;
+      padding: 2rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      background-color: white;
+      border-radius: 8px;
+      position: relative;
+      animation: modalZoomIn 0.3s ease-out;
+    }
+    
+    @keyframes modalZoomIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .confirmation-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      animation: pulse 1s infinite alternate;
+    }
+    
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+    
+    .confirmation-modal h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary-color);
+    }
+    
+    .confirmation-modal p {
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    
+    .confirmation-modal .warning-text {
+      color: var(--warning-color);
+      font-weight: bold;
+      background-color: rgba(255, 193, 7, 0.1);
+      padding: 0.75rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+    
+    .confirmation-modal .note-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-bottom: 1.5rem;
+    }
+    
+    .confirmation-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    .confirmation-buttons button {
+      min-width: 120px;
+      padding: 0.75rem 1.25rem;
+    }
+    
+    #confirmSubmission {
+      background-color: var(--primary-color);
+    }
+    
+    #confirmSubmission:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    @media (max-width: 576px) {
+      .confirmation-buttons {
+        flex-direction: column;
+      }
+      
+      .confirmation-buttons button {
+        width: 100%;
+      }
+    }
+  `;
+  document.head.appendChild(modalStyle);
+  
+  // Add event listeners
+  document.getElementById('cancelSubmission').addEventListener('click', () => {
+    // Close the modal
+    document.body.removeChild(modal);
+    document.head.removeChild(modalStyle);
+    examSubmitted = false; // Allow re-submission
+  });
+  
+  document.getElementById('confirmSubmission').addEventListener('click', () => {
+    // Close the modal
+    document.body.removeChild(modal);
+    document.head.removeChild(modalStyle);
+    
+    // Call the confirm callback
+    onConfirm();
+  });
+}
 
-    // Calculate score
-    let score = 0;
+// Finalize exam submission after confirmation
+function finalizeExamSubmission() {
+  examSubmitted = true;
+  
+  // Stop the timer
+      clearInterval(examTimer);
+  
+  // Remove the timer display
+  const timerContainer = document.querySelector('.timer-container');
+  if (timerContainer) {
+    timerContainer.remove();
+  }
+
+  // Calculate score
+  let score = 0;
   let totalPoints = 0;
   let correctAnswers = 0;
-    
-    examQuestions.forEach((question, index) => {
+  
+  examQuestions.forEach((question, index) => {
     totalPoints += question.points;
     
     if (userAnswers[index] === null) {
@@ -732,21 +916,21 @@ async function submitExam() {
         score += question.points;
         correctAnswers++;
       }
-        } else {
+    } else {
       // For direct answers, comparison should be case-insensitive
       if (userAnswers[index].toLowerCase() === question.correctAnswer.toLowerCase()) {
         score += question.points;
         correctAnswers++;
-        }
       }
-    });
+    }
+  });
 
-    // Calculate percentage score
+  // Calculate percentage score
   const percentageScore = Math.round((score / totalPoints) * 100);
   
   // Display result
   examQuestionsSection.style.display = 'none';
-  examResultSection.style.display = 'block';
+    examResultSection.style.display = 'block';
   
   examScoreElement.textContent = percentageScore;
   document.getElementById('correctAnswers').textContent = correctAnswers;
@@ -758,22 +942,22 @@ async function submitExam() {
   document.getElementById('timeTaken').textContent = `${minutes} min ${seconds} sec`;
   
   // Update page title
-  document.title = `Result: ${percentageScore}% - ${examTitle}`;
+  document.title = `Résultat: ${percentageScore}% - ${examTitle}`;
   
   // Display appropriate message based on score
   let resultMessage = '';
   if (percentageScore >= 90) {
-    resultMessage = 'Excellent job! Outstanding performance!';
+    resultMessage = 'Excellent travail ! Performance exceptionnelle !';
   } else if (percentageScore >= 80) {
-    resultMessage = 'Great work! You did very well!';
+    resultMessage = 'Très bien ! Vous avez très bien réussi !';
   } else if (percentageScore >= 70) {
-    resultMessage = 'Good job! You passed with a solid score.';
+    resultMessage = 'Bon travail ! Vous avez obtenu un score solide.';
   } else if (percentageScore >= 60) {
-    resultMessage = 'Not bad! You passed the exam.';
+    resultMessage = 'Pas mal ! Vous avez réussi l\'examen.';
   } else if (percentageScore >= 50) {
-    resultMessage = 'You passed, but there\'s room for improvement.';
-  } else {
-    resultMessage = 'You didn\'t pass this time. Keep studying and try again!';
+    resultMessage = 'Vous avez réussi, mais il y a place à l\'amélioration.';
+    } else {
+    resultMessage = 'Vous n\'avez pas réussi cette fois-ci. Continuez à étudier et réessayez !';
   }
   
   // Add result message to the DOM
@@ -786,7 +970,7 @@ async function submitExam() {
   saveExamScore(percentageScore);
   
   // Show success message
-  showSuccessMessage(`Exam submitted successfully! Your score: ${percentageScore}%`);
+  showSuccessMessage(`Examen soumis avec succès ! Votre score : ${percentageScore}%`);
 }
 
 function saveExamScore(score) {
@@ -799,11 +983,11 @@ function saveExamScore(score) {
   
   const scoreData = {
     userId: userId, // Explicitly adding userId to score object for better tracking
-    examId: examId,
+      examId: examId,
     examTitle: examTitle,
     score: score,
     dateTaken: new Date().toISOString(),
-    status: score >= 50 ? 'Passed' : 'Failed',
+    status: score >= 50 ? 'Réussi' : 'Échoué',
     timeTaken: timeSpent  // Save time taken in seconds
   };
   
@@ -833,12 +1017,12 @@ function saveExamScore(score) {
   
   // Send score to the server
   fetch('/api/exams/scores', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
+      method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
       userId: userId,
       examId: scoreData.examId,
       examTitle: scoreData.examTitle,
@@ -877,14 +1061,14 @@ async function initializeExam() {
       currentUser = JSON.parse(storedUser);
       
     // Show verify section with email prefilled
-          userAuthSection.style.display = 'block';
+        userAuthSection.style.display = 'block';
     document.getElementById('loginRegisterSection').style.display = 'none';
     document.getElementById('verifySection').style.display = 'block';
     document.getElementById('userEmailDisplay').textContent = currentUser.email;
-        } else {
+    } else {
     // User not logged in, show login/register options
-    userAuthSection.style.display = 'block';
+      userAuthSection.style.display = 'block';
     document.getElementById('loginRegisterSection').style.display = 'block';
     document.getElementById('verifySection').style.display = 'none';
+    }
   }
-}

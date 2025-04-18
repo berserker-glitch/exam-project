@@ -46,6 +46,7 @@ let examData = {
     field: '',
     semester: '',
     group: '',
+    timer: 60, // Default time in minutes
     questions: []
 };
 
@@ -57,8 +58,9 @@ async function handleExamSubmit(event) {
     const targetField = document.getElementById('targetField').value;
     const targetSemester = document.getElementById('targetSemester').value;
     const targetGroup = document.getElementById('targetGroup').value.trim();
+    const examTimer = parseInt(document.getElementById('examTimer').value);
 
-    if (!validateExamDetails(examName, targetField, targetSemester)) {
+    if (!validateExamDetails(examName, targetField, targetSemester, examTimer)) {
         return;
     }
 
@@ -66,6 +68,7 @@ async function handleExamSubmit(event) {
     examData.field = targetField;
     examData.semester = targetSemester;
     examData.group = targetGroup;
+    examData.timer = examTimer;
     
     // Generate a UUID for the exam
     const examId = generateUUID();
@@ -79,9 +82,10 @@ async function handleExamSubmit(event) {
         exams.push(examData);
         localStorage.setItem('exams', JSON.stringify(exams));
         console.log('Exam saved to localStorage temporarily:', examData);
-        showSuccessMessage('Exam created successfully! (Saved locally)');
+        
+        // Display the exam link popup instead of showing a success message
         displayExamLink(examId);
-        resetForm();
+        
         return; // Skip the API call for now
         
         // Uncomment this block once the backend API is ready
@@ -96,35 +100,40 @@ async function handleExamSubmit(event) {
         });
 
         if (response.ok) {
-            showSuccessMessage('Exam created successfully!');
+            showSuccessMessage('Examen créé avec succès !');
             // Display the exam link to share with students
             displayExamLink(examId);
             resetForm();
         } else {
             const errorData = await response.json();
-            showErrorMessage(`Failed to create exam: ${errorData.message}`);
+            showErrorMessage(`Échec de création de l'examen : ${errorData.message}`);
         }
         */
     } catch (error) {
         console.error('Error creating exam:', error);
-        showErrorMessage('An error occurred while creating the exam. Please try again.');
+        showErrorMessage('Une erreur est survenue lors de la création de l\'examen. Veuillez réessayer.');
     }
 }
 
 // Validate exam details
-function validateExamDetails(examName, targetField, targetSemester) {
+function validateExamDetails(examName, targetField, targetSemester, examTimer) {
     if (examName === '') {
-        showErrorMessage('Please enter an exam name.');
+        showErrorMessage('Veuillez entrer un nom d\'examen.');
         return false;
     }
 
     if (targetField === '' || targetField === null) {
-        showErrorMessage('Please select a target field.');
+        showErrorMessage('Veuillez sélectionner une filière cible.');
         return false;
     }
 
     if (targetSemester === '' || targetSemester === null) {
-        showErrorMessage('Please select a target semester.');
+        showErrorMessage('Veuillez sélectionner un semestre cible.');
+        return false;
+    }
+    
+    if (isNaN(examTimer) || examTimer < 5 || examTimer > 240) {
+        showErrorMessage('Veuillez entrer une durée d\'examen valide (entre 5 et 240 minutes).');
         return false;
     }
 
@@ -176,7 +185,7 @@ function openQuestionCreationModal(questionType) {
                 </div>
             </div>
             <button type="button" class="btn add-option-btn" id="addOptionBtn">
-                <i class="fas fa-plus"></i> Add Option
+                <i class="fas fa-plus"></i> Ajouter une Option
             </button>
         `;
         optionsContainer.innerHTML = optionInputs;
@@ -238,7 +247,7 @@ function openQuestionEditModal(questionIndex) {
         addOptionBtn.type = 'button';
         addOptionBtn.className = 'btn add-option-btn';
         addOptionBtn.id = 'addEditOptionBtn';
-        addOptionBtn.innerHTML = '<i class="fas fa-plus"></i> Add Option';
+        addOptionBtn.innerHTML = '<i class="fas fa-plus"></i> Ajouter une Option';
         editOptionsContainer.appendChild(addOptionBtn);
 
         document.getElementById('addEditOptionBtn').addEventListener('click', addEditMCQOption);
@@ -363,17 +372,17 @@ function updateQuestionDisplay(question, index) {
 // Validate question details
 function validateQuestionDetails(questionText, correctAnswer, points) {
     if (questionText === '') {
-        showErrorMessage('Please enter question text.');
+        showErrorMessage('Veuillez saisir le texte de la question.');
         return false;
     }
 
     if (correctAnswer === '') {
-        showErrorMessage('Please enter the correct answer.');
+        showErrorMessage('Veuillez saisir la réponse correcte.');
         return false;
     }
 
     if (isNaN(points) || points < 0) {
-        showErrorMessage('Please enter a valid number of points.');
+        showErrorMessage('Veuillez saisir un nombre valide de points.');
         return false;
     }
 
@@ -388,7 +397,7 @@ function displayQuestion(question, index) {
 
     // Define question type label
     const typeLabel = question.type === 'mcq' ? 
-                     'Multiple Choice' : 'Direct Answer';
+                     'Choix Multiple' : 'Réponse Directe';
     
     // Create question HTML with edit and delete buttons
     questionElement.innerHTML = `
@@ -414,7 +423,7 @@ function displayQuestion(question, index) {
     if (question.type === 'mcq' && question.options) {
         const optionsContainer = document.createElement('div');
         optionsContainer.className = 'question-options-container';
-        optionsContainer.innerHTML = '<p>Options:</p><ul class="question-options"></ul>';
+        optionsContainer.innerHTML = '<p>Options :</p><ul class="question-options"></ul>';
         
         const optionsList = optionsContainer.querySelector('.question-options');
         question.options.forEach(option => {
@@ -430,7 +439,7 @@ function displayQuestion(question, index) {
     if (question.type === 'direct') {
         const answerContainer = document.createElement('div');
         answerContainer.className = 'question-answer-container';
-        answerContainer.innerHTML = `<p>Correct Answer: <span class="correct-answer">${question.correctAnswer}</span></p>`;
+        answerContainer.innerHTML = `<p>Réponse Correcte : <span class="correct-answer">${question.correctAnswer}</span></p>`;
         questionElement.appendChild(answerContainer);
     }
     
@@ -451,7 +460,7 @@ function displayQuestion(question, index) {
 
 // Delete a question
 function deleteQuestion(index) {
-    if (confirm('Are you sure you want to delete this question?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette question ?')) {
         examData.questions.splice(index, 1);
         refreshQuestionDisplay();
     }
@@ -511,7 +520,7 @@ function addEditMCQOption() {
 function removeMCQOption(event) {
     const mcqOptions = document.getElementById('mcqOptions');
     if (mcqOptions.children.length <= 2) {
-        showErrorMessage('Multiple choice questions must have at least 2 options.');
+        showErrorMessage('Les questions à choix multiples doivent avoir au moins 2 options.');
         return;
     }
     
@@ -530,7 +539,7 @@ function removeMCQOption(event) {
 function removeEditMCQOption(event) {
     const mcqOptions = document.getElementById('editMcqOptions');
     if (mcqOptions.children.length <= 2) {
-        showErrorMessage('Multiple choice questions must have at least 2 options.');
+        showErrorMessage('Les questions à choix multiples doivent avoir au moins 2 options.');
         return;
     }
     
@@ -547,49 +556,98 @@ function removeEditMCQOption(event) {
 
 // Display success message
 function showSuccessMessage(message) {
-    // Check if there's an existing message
-    let messageContainer = document.querySelector('.message-container');
+    // Check if the exam link modal is open
+    const examLinkModal = document.getElementById('examLinkModal');
     
-    if (!messageContainer) {
-        messageContainer = document.createElement('div');
-        messageContainer.className = 'message-container';
-        document.querySelector('.create-exam-container').prepend(messageContainer);
-    }
-    
-    messageContainer.innerHTML = `<div class="message success">${message}</div>`;
+    if (examLinkModal && examLinkModal.style.display === 'block') {
+        // Show the message inside the modal
+        let modalMessageContainer = examLinkModal.querySelector('.modal-message');
+        
+        if (!modalMessageContainer) {
+            modalMessageContainer = document.createElement('div');
+            modalMessageContainer.className = 'modal-message';
+            const modalContent = examLinkModal.querySelector('.modal-content');
+            modalContent.insertBefore(modalMessageContainer, modalContent.firstChild);
+        }
+        
+        modalMessageContainer.innerHTML = `<div class="message success">${message}</div>`;
     setTimeout(() => {
-        messageContainer.innerHTML = '';
-    }, 5000);
+            modalMessageContainer.innerHTML = '';
+    }, 3000);
+    } else {
+        // Show the message in the regular container
+        let messageContainer = document.querySelector('.message-container');
+        
+        if (!messageContainer) {
+            messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            document.querySelector('.create-exam-container').prepend(messageContainer);
+        }
+        
+        messageContainer.innerHTML = `<div class="message success">${message}</div>`;
+        setTimeout(() => {
+            messageContainer.innerHTML = '';
+        }, 5000);
+    }
 }
 
 // Display error message
 function showErrorMessage(message) {
-    // Check if there's an existing message
-    let messageContainer = document.querySelector('.message-container');
+    // Check if the exam link modal is open
+    const examLinkModal = document.getElementById('examLinkModal');
     
-    if (!messageContainer) {
-        messageContainer = document.createElement('div');
-        messageContainer.className = 'message-container';
-        document.querySelector('.create-exam-container').prepend(messageContainer);
-    }
-    
-    messageContainer.innerHTML = `<div class="message error">${message}</div>`;
+    if (examLinkModal && examLinkModal.style.display === 'block') {
+        // Show the message inside the modal
+        let modalMessageContainer = examLinkModal.querySelector('.modal-message');
+        
+        if (!modalMessageContainer) {
+            modalMessageContainer = document.createElement('div');
+            modalMessageContainer.className = 'modal-message';
+            const modalContent = examLinkModal.querySelector('.modal-content');
+            modalContent.insertBefore(modalMessageContainer, modalContent.firstChild);
+        }
+        
+        modalMessageContainer.innerHTML = `<div class="message error">${message}</div>`;
     setTimeout(() => {
-        messageContainer.innerHTML = '';
-    }, 5000);
+            modalMessageContainer.innerHTML = '';
+    }, 3000);
+    } else {
+        // Show the message in the regular container
+        let messageContainer = document.querySelector('.message-container');
+        
+        if (!messageContainer) {
+            messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            document.querySelector('.create-exam-container').prepend(messageContainer);
+        }
+        
+        messageContainer.innerHTML = `<div class="message error">${message}</div>`;
+        setTimeout(() => {
+            messageContainer.innerHTML = '';
+        }, 5000);
+    }
 }
 
-// Reset form
+// Reset form after successful submission
 function resetForm() {
-    examForm.reset();
-    questionContainer.innerHTML = '';
+    document.getElementById('examName').value = '';
+    document.getElementById('targetField').value = '';
+    document.getElementById('targetSemester').value = '';
+    document.getElementById('targetGroup').value = '';
+    document.getElementById('examTimer').value = '';
+    
+    // Clear questions
     examData = {
         name: '',
         field: '',
         semester: '',
         group: '',
+        timer: 60,
         questions: []
     };
+    
+    // Clear question container
+    questionContainer.innerHTML = '';
 }
 
 // Generate UUID v4
@@ -603,53 +661,86 @@ function generateUUID() {
 
 // Display exam link after successful creation
 function displayExamLink(examId) {
-    // Check if there's an existing link display
-    let linkContainer = document.querySelector('.exam-link-container');
-    
-    if (linkContainer) {
-        linkContainer.parentNode.removeChild(linkContainer);
-    }
-    
-    linkContainer = document.createElement('div');
-    linkContainer.className = 'exam-link-container';
+    // Create a modal for the exam link
+    const examLinkModal = document.createElement('div');
+    examLinkModal.id = 'examLinkModal';
+    examLinkModal.className = 'modal';
     
     const examLink = `${window.location.origin}/views/take_exam.html?exam=${examId}`;
     
-    linkContainer.innerHTML = `
-        <div class="link-header">
-            <h3>Exam Created Successfully!</h3>
-            <p>Share this link with your students:</p>
-        </div>
-        <div class="link-content">
+    examLinkModal.innerHTML = `
+        <div class="modal-content">
+            <div class="link-header">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>Examen Créé avec Succès !</h3>
+                <p>Partagez ce lien avec vos étudiants :</p>
+            </div>
+            <div class="link-content">
             <input type="text" id="examLinkInput" value="${examLink}" readonly>
-            <button type="button" class="btn copy-link-btn" id="copyLinkBtn">
-                <i class="fas fa-copy"></i> Copy
-            </button>
-        </div>
-        <div class="link-actions">
-            <a href="dashboard.html" class="btn btn-primary">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
-            </a>
-            <button type="button" class="btn btn-secondary" id="createNewExamBtn">
-                <i class="fas fa-plus"></i> Create Another Exam
+                <button type="button" class="btn btn-primary copy-link-btn" id="copyLinkBtn">
+                <i class="fas fa-copy"></i> Copier
+                </button>
+            </div>
+            <div class="link-actions">
+                <a href="dashboard.html" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Retour au Tableau de Bord
+                </a>
+                <button type="button" class="btn btn-secondary" id="closeExamLinkModal">
+                    <i class="fas fa-plus"></i> Créer un Autre Examen
+                </button>
+            </div>
+            <button class="btn close-modal-btn" id="examLinkCloseBtn">
+                <i class="fas fa-times"></i>
             </button>
         </div>
     `;
     
-    document.querySelector('.create-exam-container').appendChild(linkContainer);
+    // Add additional styling for the success icon
+    const additionalStyle = document.createElement('style');
+    additionalStyle.textContent = `
+        #examLinkModal .success-icon {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 3rem;
+            color: var(--success-color);
+            animation: scaleIn 0.5s ease;
+        }
+        
+        @keyframes scaleIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(additionalStyle);
+    
+    // Add modal to the document
+    document.body.appendChild(examLinkModal);
     
     // Add event listeners
     document.getElementById('copyLinkBtn').addEventListener('click', () => {
         const linkInput = document.getElementById('examLinkInput');
         linkInput.select();
         document.execCommand('copy');
-        showSuccessMessage('Exam link copied to clipboard!');
+        showSuccessMessage('Lien d\'examen copié dans le presse-papiers !');
     });
     
-    document.getElementById('createNewExamBtn').addEventListener('click', () => {
-        linkContainer.parentNode.removeChild(linkContainer);
+    document.getElementById('closeExamLinkModal').addEventListener('click', () => {
+        examLinkModal.style.display = 'none';
+        document.body.removeChild(examLinkModal);
         resetForm();
     });
+    
+    document.getElementById('examLinkCloseBtn').addEventListener('click', () => {
+        examLinkModal.style.display = 'none';
+        document.body.removeChild(examLinkModal);
+    });
+    
+    // Show the modal
+    examLinkModal.style.display = 'block';
 }
 
 // Redirect to dashboard
@@ -659,7 +750,7 @@ function redirectToDashboard() {
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
-    // Add CSS for smaller add question button
+    // Add CSS for smaller add question button and the exam link modal
     const styleElement = document.createElement('style');
     styleElement.textContent = `
         .add-question-btn {
@@ -674,7 +765,144 @@ document.addEventListener('DOMContentLoaded', function() {
         .edit-question-btn, .delete-question-btn {
             padding: 4px 8px;
             font-size: 12px;
-    }
+        }
+        
+        /* Exam Link Modal Styles */
+        #examLinkModal .modal-content {
+            max-width: 550px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            0% { transform: translateY(-20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        #examLinkModal .link-header {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        #examLinkModal .link-header h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        #examLinkModal .link-header p {
+            color: var(--text-secondary);
+        }
+        
+        #examLinkModal .link-content {
+            display: flex;
+            margin-bottom: 1.5rem;
+            background-color: var(--background-secondary);
+            border-radius: 8px;
+            padding: 0.75rem;
+            align-items: center;
+            gap: 10px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        #examLinkModal #examLinkInput {
+            flex: 1;
+            border: 1px solid var(--border-color);
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            background-color: white;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        #examLinkModal #examLinkInput:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(2, 117, 216, 0.25);
+        }
+        
+        #examLinkModal .copy-link-btn {
+            padding: 8px 16px;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        
+        #examLinkModal .copy-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        #examLinkModal .link-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            gap: 1rem;
+        }
+        
+        #examLinkModal .link-actions .btn {
+            flex: 1;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #examLinkModal .close-modal-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+        
+        #examLinkModal .close-modal-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        #examLinkModal .modal-message {
+            margin-bottom: 1rem;
+        }
+        
+        #examLinkModal .message {
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        #examLinkModal .message.success {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: #28a745;
+        }
+        
+        #examLinkModal .message.error {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: #dc3545;
+        }
+        
+        @media (max-width: 576px) {
+            #examLinkModal .modal-content {
+                padding: 1.5rem;
+                width: 95%;
+            }
+            
+            #examLinkModal .link-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #examLinkModal .link-actions {
+                flex-direction: column;
+            }
+        }
     `;
     document.head.appendChild(styleElement);
 }); 

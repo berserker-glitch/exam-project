@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Take Exam - Exam Platform</title>
+    <title>Passer un Examen - Plateforme d'Examen</title>
     <link rel="stylesheet" href="../public/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -14,29 +14,29 @@
         <div id="userAuth" class="user-auth">
             <!-- This section will be dynamically updated based on login status -->
             <div id="verifySection" style="display:none;">
-                <h2>Verify Your Identity</h2>
-                <p>Please enter your password to continue to the exam</p>
+                <h2>Vérifiez Votre Identité</h2>
+                <p>Veuillez saisir votre mot de passe pour continuer vers l'examen</p>
                 
                 <form id="verifyForm" class="auth-form">
                     <div class="user-info-display">
                         <p>Email: <span id="userEmailDisplay"></span></p>
                     </div>
                     <div class="form-group">
-                        <label for="verifyPassword">Password</label>
+                        <label for="verifyPassword">Mot de passe</label>
                         <input type="password" id="verifyPassword" name="verifyPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Verify & Continue</button>
+                    <button type="submit" class="btn btn-primary">Vérifier & Continuer</button>
                 </form>
             </div>
             
             <div id="loginRegisterSection">
-                <h2>Welcome to the Exam Platform</h2>
-                <p>Please register or login to continue</p>
+                <h2>Bienvenue sur la Plateforme d'Examen</h2>
+                <p>Veuillez vous inscrire ou vous connecter pour continuer</p>
                 
                 <form id="registrationForm" class="auth-form">
-                    <h3>Registration</h3>
+                    <h3>Inscription</h3>
                     <div class="form-group">
-                        <label for="regName">Name</label>
+                        <label for="regName">Nom</label>
                         <input type="text" id="regName" name="regName" required>
                     </div>
                     <div class="form-group">
@@ -44,48 +44,48 @@
                         <input type="email" id="regEmail" name="regEmail" required>
                     </div>
                     <div class="form-group">
-                        <label for="regPassword">Password</label>
+                        <label for="regPassword">Mot de passe</label>
                         <input type="password" id="regPassword" name="regPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    <button type="submit" class="btn btn-primary">S'inscrire</button>
                 </form>
 
                 <form id="loginForm" class="auth-form">
-                    <h3>Login</h3>
+                    <h3>Connexion</h3>
                     <div class="form-group">
                         <label for="loginEmail">Email</label>
                         <input type="email" id="loginEmail" name="loginEmail" required>
                     </div>
                     <div class="form-group">
-                        <label for="loginPassword">Password</label>
+                        <label for="loginPassword">Mot de passe</label>
                         <input type="password" id="loginPassword" name="loginPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="submit" class="btn btn-primary">Connexion</button>
                 </form>
             </div>
         </div>
 
         <!-- Geolocation Activation - Hidden and Disabled -->
         <div id="geolocationActivation" class="geolocation-activation" style="display:none;">
-            <h2>Geolocation Activation</h2>
-            <p>Please allow geolocation access to proceed with the exam</p>
-            <button id="activateGeolocation" class="btn btn-primary">Activate Geolocation</button>
+            <h2>Activation de la Géolocalisation</h2>
+            <p>Veuillez autoriser l'accès à la géolocalisation pour poursuivre l'examen</p>
+            <button id="activateGeolocation" class="btn btn-primary">Activer la Géolocalisation</button>
         </div>
 
         <!-- Exam Link Input -->
         <div id="examLinkSection" class="exam-link-section">
-            <h2>Enter Exam Link</h2>
-            <p>Please enter the exam link provided by your instructor</p>
+            <h2>Entrer le Lien de l'Examen</h2>
+            <p>Veuillez saisir le lien de l'examen fourni par votre instructeur</p>
             <form id="examLinkForm" class="exam-link-form">
                 <div class="form-group">
-                    <label for="examLink">Exam Link</label>
-                    <input type="text" id="examLink" name="examLink" placeholder="Enter exam link" required>
+                    <label for="examLink">Lien de l'Examen</label>
+                    <input type="text" id="examLink" name="examLink" placeholder="Entrez le lien de l'examen" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Start Exam</button>
+                <button type="submit" class="btn btn-primary">Commencer l'Examen</button>
             </form>
             <div class="form-actions">
                 <a href="dashboard.html" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    <i class="fas fa-arrow-left"></i> Retour au Tableau de Bord
                 </a>
             </div>
         </div>
@@ -98,7 +98,7 @@
             <div id="questionNavigation" class="question-navigation-dots"></div>
             
             <!-- Answered Counter -->
-            <div id="answeredCounter" class="answered-counter">0/0 questions answered</div>
+            <div id="answeredCounter" class="answered-counter">0/0 questions répondues</div>
             
             <!-- Question Container -->
             <div id="questionContainer" class="question-container">
@@ -107,25 +107,25 @@
             
             <!-- Navigation Buttons -->
             <div class="question-navigation-buttons">
-                <button id="prevQuestion" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Previous</button>
-                <button id="nextQuestion" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
-                <button id="submitExam" class="btn btn-success" style="display:none;"><i class="fas fa-check"></i> Submit Exam</button>
+                <button id="prevQuestion" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Précédent</button>
+                <button id="nextQuestion" class="btn btn-primary">Suivant <i class="fas fa-arrow-right"></i></button>
+                <button id="submitExam" class="btn btn-success" style="display:none;"><i class="fas fa-check"></i> Soumettre l'Examen</button>
             </div>
         </div>
 
         <!-- Exam Result -->
         <div id="examResult" class="exam-result" style="display:none;">
-            <h2>Exam Result</h2>
+            <h2>Résultat de l'Examen</h2>
             <div class="result-card">
                 <div class="score-display">
                     <span id="examScore">0</span>
                     <span class="score-label">/ 100</span>
                 </div>
                 <div class="result-details">
-                    <p>Correct answers: <span id="correctAnswers">0</span> out of <span id="totalQuestions">0</span></p>
-                    <p>Time taken: <span id="timeTaken">0 minutes</span></p>
+                    <p>Réponses correctes: <span id="correctAnswers">0</span> sur <span id="totalQuestions">0</span></p>
+                    <p>Temps pris: <span id="timeTaken">0 minutes</span></p>
                 </div>
-                <a href="dashboard.html" class="btn btn-primary"><i class="fas fa-home"></i> Back to Dashboard</a>
+                <a href="dashboard.html" class="btn btn-primary"><i class="fas fa-home"></i> Retour au Tableau de Bord</a>
             </div>
         </div>
     </div>

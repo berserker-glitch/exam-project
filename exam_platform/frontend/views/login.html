@@ -1,26 +1,26 @@
 <!--
-    Login Page
+    Page de Connexion
     
-    This page handles user authentication with the following features:
-    - Email and password-based login
-    - Form validation
-    - Responsive design
-    - Clean and modern UI
-    - Integration with backend authentication API
-    - Redirect to signup for new users
+    Cette page gère l'authentification des utilisateurs avec les fonctionnalités suivantes :
+    - Connexion basée sur l'email et le mot de passe
+    - Validation de formulaire
+    - Design responsive
+    - Interface utilisateur propre et moderne
+    - Intégration avec l'API d'authentification backend
+    - Redirection vers l'inscription pour les nouveaux utilisateurs
     
-    Dependencies:
-    - style.css: Custom styles for the login form
-    - main.js: Form validation and API integration
-    - Poppins font from Google Fonts
+    Dépendances :
+    - style.css : Styles personnalisés pour le formulaire de connexion
+    - main.js : Validation de formulaire et intégration API
+    - Police Poppins de Google Fonts
 -->
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - EC</title>
+    <title>Connexion - EC</title>
     <!-- External stylesheets -->
     <link rel="stylesheet" href="../public/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -30,8 +30,8 @@
     <div class="auth-container">
         <!-- Welcome message section -->
         <div class="welcome-message">
-            <h1>Welcome Back</h1>
-            <p>Login to your account</p>
+            <h1>Bon Retour</h1>
+            <p>Connectez-vous à votre compte</p>
         </div>
         
         <!-- Login form with client-side validation -->
@@ -39,14 +39,14 @@
             <!-- Email input field -->
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="Enter your email">
+                <input type="email" id="email" name="email" required placeholder="Entrez votre email">
             </div>
             
             <!-- Password input field -->
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Mot de passe</label>
                 <div class="password-input-container">
-                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    <input type="password" id="password" name="password" required placeholder="Entrez votre mot de passe">
                     <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password')">
                         <svg class="eye-icon" viewBox="0 0 24 24" width="24" height="24">
                             <path class="eye-open" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
@@ -57,12 +57,12 @@
             </div>
             
             <!-- Submit button -->
-            <button type="submit" class="btn login-btn">Login</button>
+            <button type="submit" class="btn login-btn">Connexion</button>
         </form>
         
         <!-- Sign up link for new users -->
         <div class="form-footer">
-            <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+            <p>Vous n'avez pas de compte ? <a href="signup.html">S'inscrire</a></p>
         </div>
     </div>
 

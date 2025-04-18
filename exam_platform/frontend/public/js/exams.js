@@ -1,17 +1,17 @@
 /**
- * Exams Management Module
+ * Module de Gestion des Examens
  * 
- * This module handles the listing and management of exams, including:
- * - Loading and displaying exams
- * - Filtering exams by year, semester, and group
- * - Managing exam actions (view, edit, delete)
- * - State management for exam list
+ * Ce module gère la liste et la gestion des examens, notamment :
+ * - Chargement et affichage des examens
+ * - Filtrage des examens par année, semestre et groupe
+ * - Gestion des actions sur les examens (voir, modifier, supprimer)
+ * - Gestion de l'état pour la liste des examens
  * 
- * Features:
- * - Dynamic filtering
- * - Real-time updates
- * - Error handling
- * - Loading states
+ * Fonctionnalités :
+ * - Filtrage dynamique
+ * - Mises à jour en temps réel
+ * - Gestion des erreurs
+ * - États de chargement
  * 
  * @module ExamsManagement
  */
@@ -78,11 +78,11 @@ async function loadExams() {
             currentExams = data.exams;
             renderExams(currentExams);
         } else {
-            throw new Error(data.message || 'Failed to load exams');
+            throw new Error(data.message || 'Échec du chargement des examens');
         }
     } catch (error) {
         console.error('Error loading exams:', error);
-        showError('Failed to load exams. Please try again later.');
+        showError('Échec du chargement des examens. Veuillez réessayer plus tard.');
     } finally {
         showLoading(false);
     }
@@ -137,8 +137,8 @@ function createExamElement(exam) {
     
     // Set exam data
     examCard.querySelector('.exam-title').textContent = exam.title;
-    examCard.querySelector('.exam-description').textContent = exam.description || 'No description provided';
-    examCard.querySelector('.year-badge').textContent = `Year ${exam.target_year}`;
+    examCard.querySelector('.exam-description').textContent = exam.description || 'Aucune description fournie';
+    examCard.querySelector('.year-badge').textContent = `Année ${exam.target_year}`;
     examCard.querySelector('.semester-badge').textContent = exam.target_semester;
     if (exam.target_group) {
         examCard.querySelector('.group-badge').textContent = exam.target_group;
@@ -201,18 +201,18 @@ async function editExam(examId) {
 }
 
 /**
- * Deletes an exam after confirmation
+ * Deletes an exam
  * 
  * Process:
- * 1. Shows confirmation dialog
- * 2. Sends delete request to API
+ * 1. Confirms deletion with user
+ * 2. Sends DELETE request to API
  * 3. Updates UI on success
  * 4. Handles errors
  * 
  * @param {string} examId - ID of the exam to delete
  */
 async function deleteExam(examId) {
-    if (!confirm('Are you sure you want to delete this exam? This action cannot be undone.')) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet examen ? Cette action ne peut pas être annulée.')) {
         return;
     }
 
@@ -228,10 +228,10 @@ async function deleteExam(examId) {
             currentExams = currentExams.filter(exam => exam.id !== examId);
             renderExams(currentExams);
         } else {
-            throw new Error(result.message || 'Failed to delete exam');
+            throw new Error(result.message || 'Échec de la suppression de l\'examen');
         }
     } catch (error) {
         console.error('Error deleting exam:', error);
-        showError('Failed to delete exam. Please try again later.');
+        showError('Échec de la suppression de l\'examen. Veuillez réessayer plus tard.');
     }
 } 

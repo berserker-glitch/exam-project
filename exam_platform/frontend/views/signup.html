@@ -1,36 +1,36 @@
 <!--
-    Sign Up Page
+    Page d'Inscription
     
-    This page handles new user registration with the following features:
-    - Comprehensive user information collection
-    - Strong password requirements
-    - Real-time password validation
-    - Field validation
-    - Responsive design
-    - Integration with backend registration API
+    Cette page gère l'inscription des nouveaux utilisateurs avec les fonctionnalités suivantes :
+    - Collecte complète d'informations utilisateur
+    - Exigences strictes pour les mots de passe
+    - Validation des mots de passe en temps réel
+    - Validation des champs
+    - Design responsive
+    - Intégration avec l'API d'inscription backend
     
-    Form Fields:
-    - Full Name
+    Champs du formulaire :
+    - Nom complet
     - Email
-    - Date of Birth
-    - Sex (Gender)
-    - Field of Study (Filière)
-    - Semester
-    - Password with requirements
-    - Password confirmation
+    - Date de naissance
+    - Sexe
+    - Filière d'études
+    - Semestre
+    - Mot de passe avec exigences
+    - Confirmation du mot de passe
     
-    Dependencies:
-    - style.css: Custom styles for the signup form
-    - main.js: Form validation, password checking, and API integration
-    - Poppins font from Google Fonts
+    Dépendances :
+    - style.css : Styles personnalisés pour le formulaire d'inscription
+    - main.js : Validation de formulaire, vérification de mot de passe et intégration API
+    - Police Poppins de Google Fonts
 -->
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - EC</title>
+    <title>Inscription - EC</title>
     <!-- External stylesheets -->
     <link rel="stylesheet" href="../public/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -40,46 +40,46 @@
     <div class="auth-container">
         <!-- Welcome message section -->
         <div class="welcome-message">
-            <h1>Create Account</h1>
-            <p>Join our community</p>
+            <h1>Créer un Compte</h1>
+            <p>Rejoignez notre communauté</p>
         </div>
         
         <!-- Registration form with client-side validation -->
         <form id="signupForm" onsubmit="return validateSignup(event)">
             <!-- Personal Information Section -->
             <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+                <label for="fullName">Nom Complet</label>
+                <input type="text" id="fullName" name="fullName" required placeholder="Entrez votre nom complet">
             </div>
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="Enter your email">
+                <input type="email" id="email" name="email" required placeholder="Entrez votre email">
             </div>
             <div class="form-group">
-                <label for="dob">Date of Birth</label>
+                <label for="dob">Date de Naissance</label>
                 <input type="date" id="dob" name="dob" required 
                     max="2006-12-31" 
                     min="1950-01-01" 
                     onchange="validateAge(this.value)"
                     class="date-input">
-                <small class="date-hint">You must be at least 18 years old</small>
+                <small class="date-hint">Vous devez avoir au moins 18 ans</small>
             </div>
             
             <!-- Demographic Information -->
             <div class="form-group">
-                <label for="sex">Sex</label>
+                <label for="sex">Sexe</label>
                 <select id="sex" name="sex" required>
-                    <option value="">Select your sex</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
+                    <option value="">Sélectionnez votre sexe</option>
+                    <option value="male">Masculin</option>
+                    <option value="female">Féminin</option>
                 </select>
             </div>
             
             <!-- Academic Information -->
             <div class="form-group">
-                <label for="filiere">Field of Study (Filière)</label>
+                <label for="filiere">Filière d'Études</label>
                 <select id="filiere" name="filiere" required>
-                    <option value="">Select your field</option>
+                    <option value="">Sélectionnez votre filière</option>
                     <option value="sma">SMA</option>
                     <option value="smi">SMI</option>
                     <option value="bcg">BCG</option>
@@ -87,24 +87,24 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="studyYear">Semester</label>
+                <label for="studyYear">Semestre</label>
                 <select id="studyYear" name="studyYear" required>
-                    <option value="">Select your semester</option>
-                    <option value="1">Semester 1</option>
-                    <option value="2">Semester 2</option>
-                    <option value="3">Semester 3</option>
-                    <option value="4">Semester 4</option>
-                    <option value="5">Semester 5</option>
-                    <option value="6">Semester 6</option>
+                    <option value="">Sélectionnez votre semestre</option>
+                    <option value="1">Semestre 1</option>
+                    <option value="2">Semestre 2</option>
+                    <option value="3">Semestre 3</option>
+                    <option value="4">Semestre 4</option>
+                    <option value="5">Semestre 5</option>
+                    <option value="6">Semestre 6</option>
                 </select>
             </div>
             
             <!-- Password Section with Requirements -->
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Mot de passe</label>
                 <div class="password-input-container">
                     <input type="password" id="password" name="password" required 
-                           placeholder="Enter your password"
+                           placeholder="Entrez votre mot de passe"
                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}"
                            onkeyup="checkPassword(this.value)">
                     <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password')">
@@ -118,22 +118,22 @@
             
             <!-- Password Requirements List -->
             <div class="password-requirements">
-                <p>Password must contain:</p>
+                <p>Le mot de passe doit contenir :</p>
                 <ul>
-                    <li id="length">At least 8 characters</li>
-                    <li id="lowercase">One lowercase letter</li>
-                    <li id="uppercase">One uppercase letter</li>
-                    <li id="number">One number</li>
-                    <li id="special">One special character (!@#$%^&*)</li>
+                    <li id="length">Au moins 8 caractères</li>
+                    <li id="lowercase">Une lettre minuscule</li>
+                    <li id="uppercase">Une lettre majuscule</li>
+                    <li id="number">Un chiffre</li>
+                    <li id="special">Un caractère spécial (!@#$%^&*)</li>
                 </ul>
             </div>
             
             <!-- Password Confirmation -->
             <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
+                <label for="confirmPassword">Confirmer le Mot de passe</label>
                 <div class="password-input-container">
                     <input type="password" id="confirmPassword" name="confirmPassword" required 
-                           placeholder="Confirm your password">
+                           placeholder="Confirmez votre mot de passe">
                     <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
                         <svg class="eye-icon" viewBox="0 0 24 24" width="24" height="24">
                             <path class="eye-open" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
@@ -144,12 +144,12 @@
             </div>
             
             <!-- Submit Button -->
-            <button type="submit" class="btn signup-btn">Create Account</button>
+            <button type="submit" class="btn signup-btn">Créer un Compte</button>
         </form>
         
         <!-- Login Link -->
         <div class="form-footer">
-            <p>Already have an account? <a href="login.html">Login</a></p>
+            <p>Vous avez déjà un compte ? <a href="login.html">Connexion</a></p>
         </div>
     </div>
 

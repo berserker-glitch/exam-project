@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Exam - Exam Platform</title>
+    <title>Créer un Examen - Plateforme d'Examen</title>
     <link rel="stylesheet" href="../public/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -12,9 +12,9 @@
     <div class="create-exam-container">
         <header class="exam-creation-header">
             <div class="header-content">
-                <h1><i class="fas fa-file-alt"></i> Create New Exam</h1>
+                <h1><i class="fas fa-file-alt"></i> Créer un Nouvel Examen</h1>
                 <a href="dashboard.html" class="back-to-dashboard">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    <i class="fas fa-arrow-left"></i> Retour au Tableau de Bord
                 </a>
             </div>
         </header>
@@ -22,18 +22,18 @@
         <form id="examCreationForm" class="exam-creation-form">
             <!-- Exam Details Section -->
             <section class="form-section exam-details">
-                <h2>Exam Details</h2>
+                <h2>Détails de l'Examen</h2>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="examName">Exam Name</label>
+                        <label for="examName">Nom de l'Examen</label>
                         <input type="text" id="examName" name="examName" 
-                               placeholder="Enter exam name" required 
+                               placeholder="Entrez le nom de l'examen" required 
                                maxlength="100">
                     </div>
                     <div class="form-group">
-                        <label for="targetField">Target Field</label>
+                        <label for="targetField">Filière Cible</label>
                         <select id="targetField" name="targetField" required>
-                            <option value="" disabled selected>Select Field</option>
+                            <option value="" disabled selected>Sélectionnez la Filière</option>
                             <option value="sma">SMA</option>
                             <option value="smi">SMI</option>
                             <option value="bcg">BCG</option>
@@ -41,21 +41,27 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="targetSemester">Target Semester</label>
+                        <label for="targetSemester">Semestre Cible</label>
                         <select id="targetSemester" name="targetSemester" required>
-                            <option value="" disabled selected>Select Semester</option>
-                            <option value="1">Semester 1</option>
-                            <option value="2">Semester 2</option>
-                            <option value="3">Semester 3</option>
-                            <option value="4">Semester 4</option>
-                            <option value="5">Semester 5</option>
-                            <option value="6">Semester 6</option>
+                            <option value="" disabled selected>Sélectionnez le Semestre</option>
+                            <option value="1">Semestre 1</option>
+                            <option value="2">Semestre 2</option>
+                            <option value="3">Semestre 3</option>
+                            <option value="4">Semestre 4</option>
+                            <option value="5">Semestre 5</option>
+                            <option value="6">Semestre 6</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="targetGroup">Group (Optional)</label>
+                        <label for="targetGroup">Groupe (Optionnel)</label>
                         <input type="text" id="targetGroup" name="targetGroup" 
-                               placeholder="e.g., Group A">
+                               placeholder="ex., Groupe A">
+                    </div>
+                    <div class="form-group">
+                        <label for="examTimer">Durée de l'Examen (minutes) <span class="required-field">*</span></label>
+                        <input type="number" id="examTimer" name="examTimer" 
+                               placeholder="ex., 60" min="5" max="240" required>
+                        <small class="field-hint">Définissez le temps alloué pour cet examen (5-240 minutes)</small>
                     </div>
                 </div>
             </section>
@@ -65,7 +71,7 @@
                 <div class="questions-header">
                     <h2>Questions</h2>
                     <button type="button" class="btn add-question-btn" id="addQuestionBtn">
-                        <i class="fas fa-plus"></i> Add Question
+                        <i class="fas fa-plus"></i> Ajouter une Question
                     </button>
                 </div>
                 
@@ -77,7 +83,7 @@
             <!-- Form Actions -->
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary" id="createExamBtn">
-                    <i class="fas fa-save"></i> Create Exam
+                    <i class="fas fa-save"></i> Créer l'Examen
                 </button>
             </div>
         </form>
@@ -86,17 +92,17 @@
     <!-- Question Type Modal -->
     <div id="questionTypeModal" class="modal">
         <div class="modal-content">
-            <h2>Select Question Type</h2>
+            <h2>Sélectionner le Type de Question</h2>
             <div class="question-type-options">
                 <button class="btn question-type-btn" data-type="mcq">
                     <i class="fas fa-list"></i>
-                    <span>Multiple Choice</span>
-                    <small>Select from options</small>
+                    <span>Choix Multiple</span>
+                    <small>Sélectionner parmi les options</small>
                 </button>
                 <button class="btn question-type-btn" data-type="direct">
                     <i class="fas fa-pen"></i>
-                    <span>Direct Answer</span>
-                    <small>Enter correct answer</small>
+                    <span>Réponse Directe</span>
+                    <small>Entrer la bonne réponse</small>
                 </button>
             </div>
             <button class="btn close-modal-btn" id="closeQuestionTypeModal">
@@ -108,17 +114,17 @@
     <!-- Question Creation Modal -->
     <div id="questionCreationModal" class="modal">
         <div class="modal-content">
-            <h2>Create Question</h2>
+            <h2>Créer une Question</h2>
             <form id="questionForm">
                 <div class="form-group">
-                    <label for="questionText">Question Text</label>
+                    <label for="questionText">Texte de la Question</label>
                     <textarea id="questionText" name="questionText" required></textarea>
                 </div>
                 <div id="optionsContainer" class="form-group">
                     <!-- Dynamically added options for MCQ questions -->
                 </div>
                 <div class="form-group">
-                    <label for="correctAnswer">Correct Answer</label>
+                    <label for="correctAnswer">Réponse Correcte</label>
                     <input type="text" id="correctAnswer" name="correctAnswer" required>
                 </div>
                 <div class="form-group">
@@ -126,8 +132,8 @@
                     <input type="number" id="points" name="points" min="0" required>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Add Question</button>
-                    <button type="button" class="btn btn-secondary" id="cancelQuestionBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Ajouter la Question</button>
+                    <button type="button" class="btn btn-secondary" id="cancelQuestionBtn">Annuler</button>
                 </div>
             </form>
         </div>
@@ -136,18 +142,18 @@
     <!-- Question Edit Modal -->
     <div id="questionEditModal" class="modal">
         <div class="modal-content">
-            <h2>Edit Question</h2>
+            <h2>Modifier la Question</h2>
             <form id="questionEditForm">
                 <input type="hidden" id="editQuestionIndex" name="editQuestionIndex">
                 <div class="form-group">
-                    <label for="editQuestionText">Question Text</label>
+                    <label for="editQuestionText">Texte de la Question</label>
                     <textarea id="editQuestionText" name="editQuestionText" required></textarea>
                 </div>
                 <div id="editOptionsContainer" class="form-group">
                     <!-- Dynamically added options for MCQ questions -->
                 </div>
                 <div class="form-group">
-                    <label for="editCorrectAnswer">Correct Answer</label>
+                    <label for="editCorrectAnswer">Réponse Correcte</label>
                     <input type="text" id="editCorrectAnswer" name="editCorrectAnswer" required>
                 </div>
                 <div class="form-group">
@@ -155,8 +161,8 @@
                     <input type="number" id="editPoints" name="editPoints" min="0" required>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer les Modifications</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn">Annuler</button>
                 </div>
             </form>
         </div>
