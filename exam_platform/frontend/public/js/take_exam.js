@@ -21,6 +21,9 @@ let userAnswers = [];
 let examDuration = 0;
 let examTimer;
 let currentUser = null;
+let examId = null;
+let examTitle = "Exam"; // Default title
+let timeSpent = 0; // Track time spent on the exam
 
 // Event listeners
 registrationForm.addEventListener('submit', registerUser);
@@ -32,6 +35,47 @@ nextQuestionButton.addEventListener('click', showNextQuestion);
 submitExamButton.addEventListener('click', submitExam);
 if (examLinkForm) {
   examLinkForm.addEventListener('submit', handleExamLinkSubmit);
+}
+
+// Check if we need to initialize based on URL params
+document.addEventListener('DOMContentLoaded', function() {
+  // Add keyboard navigation
+  document.addEventListener('keydown', handleKeyboardNavigation);
+
+  // Check if there's an exam ID in the URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('exam')) {
+    examId = urlParams.get('exam');
+    initializeExam();
+  }
+  
+  // Add event listeners to question answers
+  document.addEventListener('change', function(event) {
+    if (event.target.classList.contains('question-answer-input') || 
+        event.target.classList.contains('mcq-option-input')) {
+      saveAnswer();
+    }
+  });
+});
+
+// Handle keyboard navigation for accessibility
+function handleKeyboardNavigation(e) {
+  // Only work when in exam question mode
+  if (examQuestionsSection.style.display !== 'block') return;
+  
+  if (e.key === 'ArrowLeft' && !prevQuestionButton.disabled) {
+    showPreviousQuestion();
+  } else if (e.key === 'ArrowRight' && nextQuestionButton.style.display !== 'none') {
+    showNextQuestion();
+  } else if (e.key === 'Enter' && submitExamButton.style.display !== 'none' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+    submitExam();
+  } else if (e.key >= '1' && e.key <= '9') {
+    const numericKey = parseInt(e.key);
+    if (numericKey <= examQuestions.length) {
+      saveAnswer();
+      showQuestion(numericKey - 1); 
+    }
+  }
 }
 
 // Functions
@@ -82,7 +126,7 @@ async function loginUser(event, emailOverride, passwordOverride) {
     if (passwordOnly) {
       // User is already logged in, just verify password
       email = currentUser.email;
-      password = document.getElementById('loginPassword').value;
+      password = document.getElementById('verifyPassword').value;
     } else {
       // Full login required
       email = document.getElementById('loginEmail').value;
@@ -92,6 +136,40 @@ async function loginUser(event, emailOverride, passwordOverride) {
 
   console.log(`Attempting login for ${email}`);
 
+  // TEMPORARY FALLBACK: Simulate login with localStorage since backend API is not yet implemented
+  // Remove this block once the backend API is ready
+  try {
+    // Just for demo, store user login
+    currentUser = { 
+      email: email, 
+      name: 'User', 
+      field: 'smi',
+      semester: 2
+    };
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    localStorage.setItem('token', 'demo-token');
+    
+    userAuthSection.style.display = 'none';
+    
+    // If we have an exam ID from URL or form, proceed to load the exam
+    if (examId) {
+      fetchExamQuestions(examId);
+      examQuestionsSection.style.display = 'block';
+      examLinkSection.style.display = 'none';
+    } else {
+      // Show the exam link input form
+      examLinkSection.style.display = 'block';
+    }
+    
+    return; // Skip the API call
+  } catch (error) {
+    console.error('Error during mock login:', error);
+    showErrorMessage('An error occurred during login simulation. Please try again.');
+    return;
+  }
+
+  // REAL API LOGIN - Uncomment when backend is ready
+  /*
   try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
@@ -117,6 +195,7 @@ async function loginUser(event, emailOverride, passwordOverride) {
     console.error('Error during login:', error);
     showErrorMessage('An error occurred during login. Please try again.');
   }
+  */
 }
 
 // Function to skip geolocation and proceed to the next step
@@ -238,24 +317,38 @@ function showGeolocationError(message) {
 }
 
 function showErrorMessage(message) {
-  const errorMessage = document.createElement('div');
-  errorMessage.classList.add('error-message');
-  errorMessage.textContent = message;
-  document.body.appendChild(errorMessage);
-
+  // Check if there's an existing message
+  let messageContainer = document.querySelector('.message-container');
+  
+  if (!messageContainer) {
+    messageContainer = document.createElement('div');
+    messageContainer.className = 'message-container';
+    document.querySelector('.exam-container').prepend(messageContainer);
+  }
+  
+  messageContainer.innerHTML = `<div class="message error">
+    <i class="fas fa-exclamation-circle"></i> ${message}
+  </div>`;
   setTimeout(() => {
-    errorMessage.remove();
+    messageContainer.innerHTML = '';
   }, 5000);
 }
 
 function showSuccessMessage(message) {
-  const successMessage = document.createElement('div');
-  successMessage.classList.add('success-message');
-  successMessage.textContent = message;
-  document.body.appendChild(successMessage);
-
+  // Check if there's an existing message
+  let messageContainer = document.querySelector('.message-container');
+  
+  if (!messageContainer) {
+    messageContainer = document.createElement('div');
+    messageContainer.className = 'message-container';
+    document.querySelector('.exam-container').prepend(messageContainer);
+  }
+  
+  messageContainer.innerHTML = `<div class="message success">
+    <i class="fas fa-check-circle"></i> ${message}
+  </div>`;
   setTimeout(() => {
-    successMessage.remove();
+    messageContainer.innerHTML = '';
   }, 5000);
 }
 
@@ -273,466 +366,482 @@ async function handleExamLinkSubmit(event) {
     return;
   }
   
-  examLinkSection.style.display = 'none';
-  await fetchExamQuestions(examLink);
-  examQuestionsSection.style.display = 'block';
+  try {
+    await fetchExamQuestions(examLink);
+    examLinkSection.style.display = 'none';
+    examQuestionsSection.style.display = 'block';
+  } catch (error) {
+    console.error('Error fetching exam questions:', error);
+    showErrorMessage('Failed to load the exam. Please check the link and try again.');
+  }
 }
 
 async function fetchExamQuestions(examLink) {
+  // Extract exam ID from link if it's a full URL
+  let examId = examLink;
+  if (examLink.includes('?exam=')) {
+    examId = examLink.split('?exam=')[1];
+  }
+  
+  // TEMPORARY FALLBACK: Fetch from localStorage since backend API is not yet implemented
   try {
-    // TEMPORARY FALLBACK: Fetch from localStorage since backend API is not yet implemented
-    // Remove this block once the backend API is ready
     const exams = JSON.parse(localStorage.getItem('exams') || '[]');
-    const exam = exams.find(exam => exam.id === examLink);
+    const exam = exams.find(e => e.id === examId);
     
-    if (exam) {
-      console.log('Exam loaded from localStorage:', exam);
-      examQuestions = exam.questions || [];
-      examDuration = exam.duration || 60; // Default 60 minutes if not specified
-      
-      if (examQuestions.length === 0) {
-        showErrorMessage('This exam does not have any questions. Please contact your instructor.');
-        return;
-      }
-      
-      startExamTimer();
-      showQuestion(currentQuestionIndex);
-    } else {
-      showErrorMessage('Exam not found. Please check the exam link and try again.');
+    if (!exam) {
+      throw new Error('Exam not found');
     }
-    return; // Skip the API call for now
     
-    // Uncomment this block once the backend API is ready
-    /*
-    const response = await fetch(`/api/exams/${examLink}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-
-    if (response.ok) {
-      const exam = await response.json();
-      examQuestions = exam.questions;
-      examDuration = exam.duration || 60; // Default 60 minutes if not specified
-      startExamTimer();
-      showQuestion(currentQuestionIndex);
-    } else {
-      const error = await response.json();
-      showErrorMessage(`Failed to fetch exam questions: ${error.message}`);
-    }
-    */
+    console.log('Found exam:', exam);
+    
+    // Set up exam data
+    examQuestions = exam.questions;
+    examDuration = 60 * 60; // Default to 60 minutes if not specified
+    examTitle = exam.name || "Exam";
+    
+    // Set the page title to include the exam name
+    document.title = `Taking: ${examTitle} - Exam Platform`;
+    
+    // Initialize user answers array
+    userAnswers = new Array(examQuestions.length).fill(null);
+    
+    // Display the first question
+    showQuestion(0);
+    updateQuestionNavigation();
+    updateNavigationButtons();
+    
+    // Start exam timer
+    startExamTimer();
+    
+    return exam;
   } catch (error) {
-    console.error('Error fetching exam questions:', error);
-    showErrorMessage('An error occurred while fetching exam questions. Please try again.');
+    console.error('Error fetching exam from localStorage:', error);
+    showErrorMessage('Exam not found. Please check the link and try again.');
+    throw error;
   }
 }
 
 function startExamTimer() {
-  const endTime = Date.now() + examDuration * 60000;
+  let timeRemaining = examDuration;
   
   // Create timer display if it doesn't exist
-  if (!document.getElementById('examTimer')) {
-    const timerElement = document.createElement('div');
-    timerElement.id = 'examTimer';
-    timerElement.classList.add('exam-timer');
-    examQuestionsSection.insertBefore(timerElement, questionContainer);
+  let timerDisplay = document.getElementById('examTimer');
+  if (!timerDisplay) {
+    timerDisplay = document.createElement('div');
+    timerDisplay.id = 'examTimer';
+    timerDisplay.className = 'exam-timer';
+    examQuestionsSection.prepend(timerDisplay);
   }
   
-  examTimer = setInterval(() => {
-    const remainingTime = endTime - Date.now();
+  // Update timer display
+  function updateTimer() {
+    timeSpent = examDuration - timeRemaining; // Update time spent
     
-    if (remainingTime <= 0) {
+    const hours = Math.floor(timeRemaining / 3600);
+    const minutes = Math.floor((timeRemaining % 3600) / 60);
+    const seconds = timeRemaining % 60;
+    
+    timerDisplay.innerHTML = `
+      <i class="fas fa-clock"></i> Time Remaining: 
+      ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}
+    `;
+    
+    // Change colors based on time remaining
+    if (timeRemaining <= 300) { // 5 minutes warning
+      timerDisplay.classList.add('timer-warning');
+      timerDisplay.querySelector('i').className = 'fas fa-exclamation-circle';
+    } else if (timeRemaining <= 600) { // 10 minutes warning
+      timerDisplay.style.color = 'var(--warning-color)';
+    }
+    
+    if (timeRemaining <= 0) {
       clearInterval(examTimer);
-      showErrorMessage('Exam time is up! Submitting answers...');
+      showErrorMessage('Time is up! Your exam is being submitted automatically.');
       submitExam();
-    } else {
-      const minutes = Math.floor(remainingTime / 60000);
-      const seconds = Math.floor((remainingTime % 60000) / 1000);
-      document.getElementById('examTimer').textContent = `Time remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
-  }, 1000);
+    
+    timeRemaining--;
+  }
+  
+  // Initial display
+  updateTimer();
+  
+  // Start countdown
+  examTimer = setInterval(updateTimer, 1000);
 }
 
-// Function to show a specific question
 function showQuestion(index) {
-    if (index < 0 || index >= examQuestions.length) {
-        console.error('Invalid question index:', index);
-        return;
-    }
+  // Validate index
+  if (index < 0 || index >= examQuestions.length) {
+    return;
+  }
 
-    // Save current answer before switching questions
-    saveAnswer();
-
-    // Update current question index
-    currentQuestionIndex = index;
+  currentQuestionIndex = index;
+  const question = examQuestions[index];
     
-    const question = examQuestions[index];
-    const questionContainer = document.getElementById('questionContainer');
-    questionContainer.innerHTML = '';
+  // Clear previous question
+  questionContainer.innerHTML = '';
 
-    // Create question title
-    const titleElement = document.createElement('h3');
-    titleElement.className = 'question-title';
-    titleElement.textContent = `Question ${index + 1}: ${question.title || 'Untitled Question'}`;
-    questionContainer.appendChild(titleElement);
-
-    // Create question text
-    const textElement = document.createElement('p');
-    textElement.className = 'question-text';
-    textElement.textContent = question.text;
-    questionContainer.appendChild(textElement);
-
-    // Create answer input based on question type
-    if (question.type === 'multiple_choice') {
-        const optionsContainer = document.createElement('div');
-        optionsContainer.className = 'options-container';
-        
-        question.options.forEach((option, optionIndex) => {
-            const optionWrapper = document.createElement('div');
-            optionWrapper.className = 'option-wrapper';
-            
-            const radioInput = document.createElement('input');
-            radioInput.type = 'radio';
-            radioInput.id = `option_${optionIndex}`;
-            radioInput.name = `question_${index}`;
-            radioInput.value = option;
-            
-            // Check if user has previously selected this option
-            if (userAnswers[index] === option) {
-                radioInput.checked = true;
+  // Create question card
+  const questionCard = document.createElement('div');
+  questionCard.className = 'question-card';
+  
+  // Question header
+  const questionHeader = document.createElement('div');
+  questionHeader.className = 'question-header';
+  questionHeader.innerHTML = `
+    <h3>Question ${index + 1} of ${examQuestions.length}</h3>
+    <span class="question-points">${question.points} points</span>
+  `;
+  questionCard.appendChild(questionHeader);
+  
+  // Question text
+  const questionText = document.createElement('p');
+  questionText.className = 'question-text';
+  questionText.textContent = question.text;
+  questionCard.appendChild(questionText);
+  
+  // Question answer area
+  const answerArea = document.createElement('div');
+  answerArea.className = 'question-answer-area';
+  
+  if (question.type === 'mcq' && question.options) {
+    // Multiple choice question
+    question.options.forEach((option, optIndex) => {
+      const optionDiv = document.createElement('div');
+      optionDiv.className = 'mcq-option';
+      
+      const optionInput = document.createElement('input');
+      optionInput.type = 'radio';
+      optionInput.name = `question-${index}`;
+      optionInput.id = `option-${index}-${optIndex}`;
+      optionInput.value = option;
+      optionInput.className = 'mcq-option-input';
+      
+      // Check if this option was previously selected
+      if (userAnswers[index] === option) {
+        optionInput.checked = true;
+      }
+      
+      const optionLabel = document.createElement('label');
+      optionLabel.htmlFor = `option-${index}-${optIndex}`;
+      optionLabel.textContent = option;
+      
+      // Add keyboard shortcut
+      const shortcutSpan = document.createElement('span');
+      shortcutSpan.className = 'keyboard-shortcut';
+      shortcutSpan.textContent = `Option ${optIndex + 1}`;
+      optionLabel.appendChild(shortcutSpan);
+      
+      optionDiv.appendChild(optionInput);
+      optionDiv.appendChild(optionLabel);
+      answerArea.appendChild(optionDiv);
+      
+      // Add keyboard shortcut for options (1-9)
+      optionInput.addEventListener('keydown', function(e) {
+        const key = e.key;
+        if (key >= '1' && key <= '9') {
+          const keyIndex = parseInt(key) - 1;
+          if (keyIndex < question.options.length) {
+            const targetOption = document.getElementById(`option-${index}-${keyIndex}`);
+            if (targetOption) {
+              targetOption.checked = true;
+              saveAnswer();
             }
-            
-            // Add event listener to save answer on change
-            radioInput.addEventListener('change', () => {
-                if (radioInput.checked) {
-                    userAnswers[index] = option;
-                    updateQuestionNavigation();
-                    updateAnsweredCounter();
-                }
-            });
-            
-            const label = document.createElement('label');
-            label.htmlFor = `option_${optionIndex}`;
-            label.textContent = option;
-            
-            optionWrapper.appendChild(radioInput);
-            optionWrapper.appendChild(label);
-            optionsContainer.appendChild(optionWrapper);
-        });
-        
-        questionContainer.appendChild(optionsContainer);
-    } else if (question.type === 'direct_answer') {
-        const answerTextarea = document.createElement('textarea');
-        answerTextarea.id = 'answerInput';
-        answerTextarea.className = 'answer-input';
-        answerTextarea.placeholder = 'Type your answer here...';
-        
-        // Set previously saved answer if exists
-        if (userAnswers[index]) {
-            answerTextarea.value = userAnswers[index];
+          }
         }
-        
-        // Add input event to auto-save answer as user types
-        answerTextarea.addEventListener('input', () => {
-            userAnswers[index] = answerTextarea.value.trim();
-            updateQuestionNavigation();
-            updateAnsweredCounter();
-        });
-        
-        questionContainer.appendChild(answerTextarea);
-    }
-
-    // Update navigation UI
-    updateNavigationButtons();
-    updateQuestionNavigation();
-    updateAnsweredCounter();
-}
-
-// Update the navigation buttons based on current question index
-function updateNavigationButtons() {
-    const prevButton = document.getElementById('prevQuestion');
-    const nextButton = document.getElementById('nextQuestion');
-    
-    prevButton.disabled = currentQuestionIndex === 0;
-    nextButton.disabled = currentQuestionIndex === examQuestions.length - 1;
-}
-
-// Update question navigation dots
-function updateQuestionNavigation() {
-    const navigationContainer = document.getElementById('questionNavigation');
-    navigationContainer.innerHTML = '';
-    
-    examQuestions.forEach((_, index) => {
-        const navDot = document.createElement('span');
-        navDot.className = 'nav-dot';
-        
-        // Add classes based on current state
-        if (index === currentQuestionIndex) {
-            navDot.classList.add('current');
-        }
-        
-        if (userAnswers[index] !== undefined && userAnswers[index] !== '') {
-            navDot.classList.add('answered');
-        }
-        
-        // Add click event to navigate to this question
-        navDot.addEventListener('click', () => {
-            showQuestion(index);
-        });
-        
-        navigationContainer.appendChild(navDot);
+      });
     });
+  } else {
+    // Direct answer question
+    const answerInput = document.createElement('input');
+    answerInput.type = 'text';
+    answerInput.placeholder = 'Your answer...';
+    answerInput.className = 'question-answer-input';
+    
+    // Set the previous answer if available
+    if (userAnswers[index]) {
+      answerInput.value = userAnswers[index];
+    }
+    
+    answerArea.appendChild(answerInput);
+    
+    // Auto-focus on the input
+    setTimeout(() => answerInput.focus(), 100);
+  }
+  
+  questionCard.appendChild(answerArea);
+  
+  // Add navigation hints
+  const navigationHints = document.createElement('div');
+  navigationHints.className = 'navigation-hints';
+  navigationHints.innerHTML = `
+    <div class="hint"><kbd>←</kbd> Previous</div>
+    <div class="hint"><kbd>→</kbd> Next</div>
+    <div class="hint"><kbd>Enter</kbd> Submit (when on last question)</div>
+    <div class="hint"><kbd>1-9</kbd> Jump to question</div>
+  `;
+  questionCard.appendChild(navigationHints);
+  
+  questionContainer.appendChild(questionCard);
+  
+  // Update navigation buttons
+  updateNavigationButtons();
+  
+  // Update the active dot in the navigation
+  updateQuestionNavigation();
+  
+  // Update answered counter
+  updateAnsweredCounter();
 }
 
-// Update the answered questions counter
+function updateNavigationButtons() {
+  // Disable previous button on first question
+  prevQuestionButton.disabled = currentQuestionIndex === 0;
+  
+  // Show/hide next and submit buttons
+  if (currentQuestionIndex === examQuestions.length - 1) {
+    nextQuestionButton.style.display = 'none';
+    submitExamButton.style.display = 'inline-block';
+  } else {
+    nextQuestionButton.style.display = 'inline-block';
+    submitExamButton.style.display = 'none';
+  }
+}
+
+function updateQuestionNavigation() {
+  const navigationDots = document.getElementById('questionNavigation');
+  navigationDots.innerHTML = '';
+    
+  examQuestions.forEach((_, index) => {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot';
+    
+    // Add number inside dot for better navigation
+    dot.textContent = index + 1;
+        
+    // Add appropriate classes
+    if (index === currentQuestionIndex) {
+      dot.classList.add('active');
+    }
+        
+    if (userAnswers[index] !== null) {
+      dot.classList.add('answered');
+    }
+        
+    // Add click event to navigate to the question
+    dot.addEventListener('click', () => {
+      saveAnswer(); // Save current answer before switching
+      showQuestion(index);
+    });
+        
+    navigationDots.appendChild(dot);
+  });
+}
+
 function updateAnsweredCounter() {
-    const answeredCounter = document.getElementById('answeredCounter');
-    if (!answeredCounter) return;
+  const answeredCount = userAnswers.filter(answer => answer !== null).length;
+  const totalCount = examQuestions.length;
     
-    const answeredCount = Object.values(userAnswers).filter(answer => answer !== undefined && answer !== '').length;
-    const totalCount = examQuestions.length;
+  const answeredCounter = document.getElementById('answeredCounter');
+  answeredCounter.textContent = `${answeredCount}/${totalCount} questions answered`;
     
-    answeredCounter.textContent = `${answeredCount}/${totalCount} questions answered`;
-    
-    // Change color based on completion
-    if (answeredCount === totalCount) {
-        answeredCounter.classList.add('complete');
-        answeredCounter.classList.remove('incomplete');
-    } else {
-        answeredCounter.classList.add('incomplete');
-        answeredCounter.classList.remove('complete');
-    }
+  // Add visual indicator if all questions are answered
+  if (answeredCount === totalCount) {
+    answeredCounter.classList.add('all-answered');
+  } else {
+    answeredCounter.classList.remove('all-answered');
+  }
 }
 
-// Show next question
 function showNextQuestion() {
-    if (currentQuestionIndex < examQuestions.length - 1) {
-        showQuestion(currentQuestionIndex + 1);
-    }
+  saveAnswer();
+  if (currentQuestionIndex < examQuestions.length - 1) {
+    showQuestion(currentQuestionIndex + 1);
+  }
 }
 
-// Show previous question
 function showPreviousQuestion() {
-    if (currentQuestionIndex > 0) {
-        showQuestion(currentQuestionIndex - 1);
-    }
+  saveAnswer();
+  if (currentQuestionIndex > 0) {
+    showQuestion(currentQuestionIndex - 1);
+  }
 }
 
 function saveAnswer() {
-    if (currentQuestionIndex === -1 || !examQuestions.length) return;
-    
-    const question = examQuestions[currentQuestionIndex];
-    
-    if (question.type === 'direct_answer') {
-        const answerInput = document.getElementById('answerInput');
-        if (answerInput && answerInput.value.trim()) {
-            userAnswers[currentQuestionIndex] = answerInput.value.trim();
-        }
-    } else if (question.type === 'multiple_choice') {
-        const selectedOption = document.querySelector(`input[name="question_${currentQuestionIndex}"]:checked`);
-        if (selectedOption) {
-            userAnswers[currentQuestionIndex] = selectedOption.value;
-        }
+  const question = examQuestions[currentQuestionIndex];
+  let answer = null;
+  
+  if (question.type === 'mcq') {
+    // Get selected option for MCQ
+    const selectedOption = document.querySelector(`input[name="question-${currentQuestionIndex}"]:checked`);
+    if (selectedOption) {
+      answer = selectedOption.value;
     }
-    
-    // Mark question as answered if it has a valid answer
-    if (userAnswers[currentQuestionIndex]) {
-        updateQuestionNavigation();
-        updateAnsweredCounter();
+  } else {
+    // Get text input for direct questions
+    const answerInput = document.querySelector('.question-answer-input');
+    if (answerInput && answerInput.value.trim() !== '') {
+      answer = answerInput.value.trim();
     }
+  }
+  
+  userAnswers[currentQuestionIndex] = answer;
+  
+  // Update the navigation dots
+  updateQuestionNavigation();
+  
+  // Update answered counter
+  updateAnsweredCounter();
 }
 
 async function submitExam() {
-  try {
-    // Save the current answer before submitting
-    saveAnswer();
+  // Save the current answer
+  saveAnswer();
+  
+  const unansweredCount = userAnswers.filter(answer => answer === null).length;
+  let confirmMessage = 'Are you sure you want to submit your exam? You cannot change your answers after submission.';
+  
+  if (unansweredCount > 0) {
+    confirmMessage = `Warning: You have ${unansweredCount} unanswered questions. Are you sure you want to submit your exam?`;
+  }
+  
+  if (!confirm(confirmMessage)) {
+    return;
+  }
     
-    // Get current user
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (!user) {
-      showErrorMessage('You must be logged in to submit an exam');
+  // Stop the timer
+  clearInterval(examTimer);
+
+  // Calculate score
+  let score = 0;
+  let totalPoints = 0;
+  let correctAnswers = 0;
+    
+  examQuestions.forEach((question, index) => {
+    totalPoints += question.points;
+    
+    if (userAnswers[index] === null) {
+      // Unanswered question, no points
       return;
     }
     
-    console.log('Submitting exam with answers:', userAnswers);
-    console.log('Exam questions:', examQuestions);
-
-    // Calculate score
-    let score = 0;
-    let totalQuestions = examQuestions.length;
-    
-    console.log('Calculating score. Total questions:', totalQuestions);
-    
-    examQuestions.forEach((question, index) => {
-      const userAnswer = userAnswers[index];
-      console.log(`Question ${index + 1}:`, question);
-      console.log(`User answer:`, userAnswer);
-      
-      if (question.type === 'direct') {
-        // For direct questions, normalize both answers for comparison
-        const normalizedCorrectAnswer = String(question.correctAnswer || '').trim().toLowerCase();
-        const normalizedUserAnswer = userAnswer ? String(userAnswer).trim().toLowerCase() : '';
-        
-        console.log(`Direct question comparison - Correct: "${normalizedCorrectAnswer}", User: "${normalizedUserAnswer}"`);
-        
-        if (normalizedUserAnswer === normalizedCorrectAnswer) {
-          score++;
-          console.log(`Question ${index + 1}: Correct! +1 point`);
-        } else {
-          console.log(`Question ${index + 1}: Incorrect. Correct answer was: ${question.correctAnswer}`);
-        }
-      } else if (question.type === 'mcq') {
-        // For MCQs, handle different formats for correctAnswer
-        let correctOption;
-        
-        if (Array.isArray(question.correctAnswer)) {
-          // If correctAnswer is an array, use the first element
-          correctOption = question.correctAnswer[0];
-        } else if (typeof question.correctAnswer === 'object' && question.correctAnswer !== null) {
-          // If correctAnswer is an object (like {id: 0, text: "answer"}), use the id
-          correctOption = question.correctAnswer.id !== undefined ? question.correctAnswer.id : question.correctAnswer.text;
-        } else {
-          // Otherwise use the value directly
-          correctOption = question.correctAnswer;
-        }
-        
-        console.log(`MCQ comparison - Correct: "${correctOption}", User: "${userAnswer}"`);
-        
-        // Compare as strings to handle potential type mismatches
-        if (String(userAnswer) === String(correctOption)) {
-          score++;
-          console.log(`Question ${index + 1}: Correct! +1 point`);
-        } else {
-          console.log(`Question ${index + 1}: Incorrect. Correct option was: ${correctOption}`);
-        }
+    if (question.type === 'mcq') {
+      // For MCQ, the answer must match exactly
+      if (userAnswers[index] === question.correctAnswer) {
+        score += question.points;
+        correctAnswers++;
       }
-    });
-
-    // Calculate percentage score
-    const percentageScore = Math.round((score / totalQuestions) * 100);
-    console.log(`Final score: ${score}/${totalQuestions} = ${percentageScore}%`);
-
-    // Clear the exam timer
-    if (examTimer) {
-      clearInterval(examTimer);
-    }
-
-    // TEMPORARY: Store result in localStorage instead of sending to server
-    // Remove this block when backend API is ready
-    const examId = getExamLinkFromUrl();
-    const examHistory = JSON.parse(localStorage.getItem('examHistory') || '[]');
-    const exam = JSON.parse(localStorage.getItem('exams') || '[]').find(e => e.id === examId);
-    
-    examHistory.push({
-      examId: examId,
-      examName: exam ? exam.title : 'Unknown Exam',
-      score: percentageScore,
-      totalQuestions: totalQuestions,
-      correctAnswers: score,
-      dateTaken: new Date().toISOString()
-    });
-    localStorage.setItem('examHistory', JSON.stringify(examHistory));
-    
-    // Hide the exam section
-    examQuestionsSection.style.display = 'none';
-    
-    // Show the result section
-    examResultSection.style.display = 'block';
-    examScoreElement.textContent = `${percentageScore}% (${score} out of ${totalQuestions} correct)`;
-    
-    // Uncomment this block when backend API is ready
-    /*
-    // Send results to server
-    const response = await fetch('/api/exams/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({
-        examId: getExamLinkFromUrl(),
-        answers: userAnswers,
-        score: percentageScore
-      })
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      
-      // Hide the exam section
-      examQuestionsSection.style.display = 'none';
-      
-      // Show the result section
-      examResultSection.style.display = 'block';
-      examScoreElement.textContent = `${percentageScore}% (${score} out of ${totalQuestions} correct)`;
     } else {
-      const error = await response.json();
-      showErrorMessage(`Failed to submit exam: ${error.message}`);
+      // For direct answers, comparison should be case-insensitive
+      if (userAnswers[index].toLowerCase() === question.correctAnswer.toLowerCase()) {
+        score += question.points;
+        correctAnswers++;
+      }
     }
-    */
-  } catch (error) {
-    console.error('Error submitting exam:', error);
-    showErrorMessage('An error occurred while submitting your exam. Please try again.');
+  });
+
+  // Calculate percentage score
+  const percentageScore = Math.round((score / totalPoints) * 100);
+  
+  // Display result
+  examQuestionsSection.style.display = 'none';
+  examResultSection.style.display = 'block';
+  
+  examScoreElement.textContent = percentageScore;
+  document.getElementById('correctAnswers').textContent = correctAnswers;
+  document.getElementById('totalQuestions').textContent = examQuestions.length;
+  
+  // Calculate time taken (in minutes)
+  const minutes = Math.floor(timeSpent / 60);
+  const seconds = timeSpent % 60;
+  document.getElementById('timeTaken').textContent = `${minutes} min ${seconds} sec`;
+  
+  // Update page title
+  document.title = `Result: ${percentageScore}% - ${examTitle}`;
+  
+  // Display appropriate message based on score
+  let resultMessage = '';
+  if (percentageScore >= 90) {
+    resultMessage = 'Excellent job! Outstanding performance!';
+  } else if (percentageScore >= 80) {
+    resultMessage = 'Great work! You did very well!';
+  } else if (percentageScore >= 70) {
+    resultMessage = 'Good job! You passed with a solid score.';
+  } else if (percentageScore >= 60) {
+    resultMessage = 'Not bad! You passed the exam.';
+  } else if (percentageScore >= 50) {
+    resultMessage = 'You passed, but there\'s room for improvement.';
+  } else {
+    resultMessage = 'You didn\'t pass this time. Keep studying and try again!';
   }
+  
+  // Add result message to the DOM
+  const resultMessageElement = document.createElement('p');
+  resultMessageElement.className = 'result-message';
+  resultMessageElement.textContent = resultMessage;
+  document.querySelector('.result-card').insertBefore(resultMessageElement, document.querySelector('.result-details'));
+  
+  // Save score to localStorage
+  saveExamScore(percentageScore);
+  
+  // Show success message
+  showSuccessMessage(`Exam submitted successfully! Your score: ${percentageScore}%`);
+}
+
+function saveExamScore(score) {
+  if (!currentUser || !currentUser.email) {
+    console.error('No user logged in, cannot save score');
+    return;
+  }
+  
+  const userId = currentUser.email;
+  
+  const scoreData = {
+    examId: examId,
+    examTitle: examTitle,
+    score: score,
+    dateTaken: new Date().toISOString(),
+    status: score >= 50 ? 'Passed' : 'Failed',
+    timeTaken: timeSpent  // Save time taken in seconds
+  };
+  
+  // Get all user scores from localStorage
+  const allUserScores = JSON.parse(localStorage.getItem('allUserScores') || '{}');
+  
+  // Add or create user scores array
+  if (!allUserScores[userId]) {
+    allUserScores[userId] = [];
+  }
+  
+  // Add new score
+  allUserScores[userId].push(scoreData);
+  
+  // Save back to localStorage
+  localStorage.setItem('allUserScores', JSON.stringify(allUserScores));
+  console.log(`Score saved for user ${userId}: ${score}%`);
 }
 
 function showLoginForm() {
-  document.getElementById('registrationForm').style.display = 'none';
-  document.getElementById('loginForm').style.display = 'block';
-  
-  // If user is already logged in, show only password field
-  if (currentUser) {
-    document.getElementById('loginEmail').parentElement.style.display = 'none';
-    document.querySelector('#loginForm h3').textContent = 'Verify Your Identity';
-    document.querySelector('#loginForm button').textContent = 'Verify';
-  }
+  registrationForm.style.display = 'none';
+  loginForm.style.display = 'block';
 }
 
 async function initializeExam() {
-  try {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('currentUser');
-    
-    if (token && storedUser) {
-      // User is logged in
-      currentUser = JSON.parse(storedUser);
+  // Check if user is logged in
+  const storedUser = localStorage.getItem('currentUser');
+  if (storedUser) {
+    currentUser = JSON.parse(storedUser);
       
-      // Verify token is still valid
-      const response = await fetch('/api/auth/verify', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        // Token is valid, check if we have an exam link in the URL
-        const examLink = getExamLinkFromUrl();
-        
-        if (examLink) {
-          // Show password verification
-          showLoginForm();
-          userAuthSection.style.display = 'block';
-        } else {
-          // No exam link, show login form
-          showLoginForm();
-          userAuthSection.style.display = 'block';
-        }
-      } else {
-        // Token expired or invalid
-        localStorage.removeItem('token');
-        localStorage.removeItem('currentUser');
-        currentUser = null;
-        userAuthSection.style.display = 'block';
-      }
-    } else {
-      // User is not logged in
-      userAuthSection.style.display = 'block';
-    }
-  } catch (error) {
-    console.error('Error initializing exam:', error);
+    // Show verify section with email prefilled
     userAuthSection.style.display = 'block';
+    document.getElementById('loginRegisterSection').style.display = 'none';
+    document.getElementById('verifySection').style.display = 'block';
+    document.getElementById('userEmailDisplay').textContent = currentUser.email;
+  } else {
+    // User not logged in, show login/register options
+    userAuthSection.style.display = 'block';
+    document.getElementById('loginRegisterSection').style.display = 'block';
+    document.getElementById('verifySection').style.display = 'none';
   }
 }
-
-initializeExam();

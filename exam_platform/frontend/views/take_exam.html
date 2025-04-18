@@ -15,10 +15,9 @@
             <!-- This section will be dynamically updated based on login status -->
             <div id="verifySection" style="display:none;">
                 <h2>Verify Your Identity</h2>
-                <p>Please enter your password to continue</p>
+                <p>Please enter your password to continue to the exam</p>
                 
                 <form id="verifyForm" class="auth-form">
-                    <h3>Password Verification</h3>
                     <div class="user-info-display">
                         <p>Email: <span id="userEmailDisplay"></span></p>
                     </div>
@@ -26,7 +25,7 @@
                         <label for="verifyPassword">Password</label>
                         <input type="password" id="verifyPassword" name="verifyPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Verify</button>
+                    <button type="submit" class="btn btn-primary">Verify & Continue</button>
                 </form>
             </div>
             
@@ -84,10 +83,15 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Start Exam</button>
             </form>
+            <div class="form-actions">
+                <a href="dashboard.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
         </div>
 
         <!-- Exam Questions -->
-        <div id="examQuestions" class="exam-questions">
+        <div id="examQuestions" class="exam-questions" style="display:none;">
             <!-- Timer will be dynamically added here -->
             
             <!-- Question Navigation Dots -->
@@ -105,12 +109,12 @@
             <div class="question-navigation-buttons">
                 <button id="prevQuestion" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Previous</button>
                 <button id="nextQuestion" class="btn btn-primary">Next <i class="fas fa-arrow-right"></i></button>
-                <button id="submitExam" class="btn btn-success"><i class="fas fa-check"></i> Submit Exam</button>
+                <button id="submitExam" class="btn btn-success" style="display:none;"><i class="fas fa-check"></i> Submit Exam</button>
             </div>
         </div>
 
         <!-- Exam Result -->
-        <div id="examResult" class="exam-result">
+        <div id="examResult" class="exam-result" style="display:none;">
             <h2>Exam Result</h2>
             <div class="result-card">
                 <div class="score-display">

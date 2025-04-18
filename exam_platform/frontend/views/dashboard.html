@@ -34,7 +34,6 @@
             <h1>Welcome, <span id="userName">User</span></h1>
             <div class="user-session-info">
                 <p>Logged in as: <span id="userEmail">-</span></p>
-                <p>Session started: <span id="sessionTime">-</span></p>
             </div>
             <!-- Keep the original logout link but with our overridden function -->
             <a href="#" onclick="logout(event)" class="logout-link">
@@ -43,13 +42,25 @@
         </div>
         
         <div class="dashboard-content">
-            <div class="user-info">
-                <p>Field: <span id="userField">-</span></p>
-                <p>Semester: <span id="userYear">-</span></p>
+            <div class="user-info-card">
+                <div class="user-info-header">
+                    <i class="fas fa-user-graduate"></i>
+                    <h2>Your Information</h2>
+                </div>
+                <div class="user-info-content">
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-book"></i> Field:</span>
+                        <span class="info-value" id="userField">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-calendar-alt"></i> Semester:</span>
+                        <span class="info-value" id="userSemester">-</span>
+                    </div>
+                </div>
             </div>
 
             <div class="exam-scores">
-                <h2>Your Exam Scores</h2>
+                <h2><i class="fas fa-chart-bar"></i> Your Exam Scores</h2>
                 <div id="scoresSummary" class="scores-summary">
                     <div class="score-stat">
                         <span class="stat-number" id="examsTaken">0</span>
@@ -108,14 +119,16 @@
             // Update user info in the UI
             document.getElementById('userName').textContent = currentUserData.name || 'User';
             document.getElementById('userEmail').textContent = userId;
-            document.getElementById('sessionTime').textContent = new Date().toLocaleTimeString();
             
-            // Update user field and year if available
+            // Update user field and semester if available
             if (currentUserData.field) {
                 document.getElementById('userField').textContent = currentUserData.field;
             }
-            if (currentUserData.year) {
-                document.getElementById('userYear').textContent = currentUserData.year;
+            if (currentUserData.semester) {
+                document.getElementById('userSemester').textContent = currentUserData.semester;
+            } else if (currentUserData.year) {
+                // Backward compatibility for old data structure
+                document.getElementById('userSemester').textContent = currentUserData.year;
             }
             
             // Update score statistics

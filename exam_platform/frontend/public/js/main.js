@@ -132,13 +132,37 @@ function updateUIForAuthenticatedUser() {
     // Update user info if elements exist
     const userFieldElement = document.getElementById('userField');
     if (userFieldElement && currentUser) {
-        userFieldElement.textContent = currentUser.field || 'Not specified';
+        // Convert field code to proper name
+        const fieldName = getFieldName(currentUser.field || 'Not specified');
+        userFieldElement.textContent = fieldName;
     }
     
-    const userYearElement = document.getElementById('userYear');
-    if (userYearElement && currentUser) {
-        userYearElement.textContent = currentUser.year || 'Not specified';
+    const userSemesterElement = document.getElementById('userSemester');
+    if (userSemesterElement && currentUser) {
+        // If semester is available, use it
+        if (currentUser.semester) {
+            userSemesterElement.textContent = `Semester ${currentUser.semester}`;
+        } 
+        // For backward compatibility
+        else if (currentUser.year) {
+            userSemesterElement.textContent = `Semester ${currentUser.year}`;
+        } 
+        else {
+            userSemesterElement.textContent = 'Not specified';
+        }
     }
+}
+
+// Helper function to convert field code to full name
+function getFieldName(fieldCode) {
+    const fieldMap = {
+        'smi': 'Computer Science',
+        'sma': 'Mathematics',
+        'bcg': 'Biology & Geology',
+        'spa': 'Physics'
+    };
+    
+    return fieldMap[fieldCode.toLowerCase()] || fieldCode;
 }
 
 // Initialize dashboard
@@ -198,79 +222,81 @@ async function fetchUserExamScores() {
 // Display exam scores in the table
 function displayExamScores(scores) {
     console.log('Displaying scores:', scores);
-    const tableBody = document.querySelector('#examScoresTable tbody');
-    if (!tableBody) {
-        console.error('Exam scores table body not found in the DOM');
-        return;
-    }
     
-    if (!Array.isArray(scores)) {
-        console.error('Invalid scores data:', scores);
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="4" class="no-scores">Error: Invalid score data</td>
-            </tr>
-        `;
-        return;
-    }
+    // Get the table body element
+    const tableBody = document.getElementById('examScoresTable').querySelector('tbody');
     
-    if (scores.length === 0) {
-        console.log('No scores available to display');
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="4" class="no-scores">No exam scores available yet.</td>
-            </tr>
-        `;
-        return;
-    }
-    
-    // Log the current user for debugging
-    const currentUserData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    console.log('Current user:', currentUserData);
-    
+    // Clear existing rows
     tableBody.innerHTML = '';
-    scores.forEach(score => {
-        try {
-            const row = document.createElement('tr');
-            
-            // Format the date
-            let dateTaken = 'Unknown';
-            try {
-                dateTaken = new Date(score.dateTaken).toLocaleDateString();
-            } catch (e) {
-                console.error('Error formatting date:', e, score.dateTaken);
-            }
-            
-            // Determine status based on score
-            let status = '';
-            let statusClass = '';
-            
-            if (score.score >= 80) {
-                status = 'Excellent';
-                statusClass = 'status-excellent';
-            } else if (score.score >= 60) {
-                status = 'Good';
-                statusClass = 'status-good';
-            } else if (score.score >= 40) {
-                status = 'Average';
-                statusClass = 'status-average';
-            } else {
-                status = 'Needs Improvement';
-                statusClass = 'status-needs-improvement';
-            }
-            
-            row.innerHTML = `
-                <td>${score.examName || 'Unnamed Exam'}</td>
-                <td>${score.score || 0}%</td>
-                <td>${dateTaken}</td>
-                <td class="${statusClass}">${status}</td>
-            `;
-            
-            tableBody.appendChild(row);
-        } catch (error) {
-            console.error('Error displaying score row:', error, score);
-        }
+    
+    if (!scores || scores.length === 0) {
+        // No scores available, show a message
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="4" class="no-scores">
+                <div class="empty-scores">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>No exams taken yet</p>
+                    <a href="take_exam.html" class="btn btn-primary">Take Your First Exam</a>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+        return;
+    }
+    
+    // Sort scores by date (most recent first)
+    scores.sort((a, b) => {
+        return new Date(b.dateTaken) - new Date(a.dateTaken);
     });
+    
+    // Add each score to the table
+    scores.forEach(score => {
+        const row = document.createElement('tr');
+        
+        // Format date
+        const date = new Date(score.dateTaken);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        // Determine status class for styling
+        const statusClass = score.status === 'Passed' ? 'status-passed' : 'status-failed';
+        
+        // Add timeTaken display if available
+        let timeInfo = '';
+        if (score.timeTaken) {
+            const minutes = Math.floor(score.timeTaken / 60);
+            const seconds = score.timeTaken % 60;
+            timeInfo = `<div class="time-taken">${minutes}m ${seconds}s</div>`;
+        }
+        
+        row.innerHTML = `
+            <td>
+                <div class="exam-title">${score.examTitle || 'Untitled Exam'}</div>
+                ${timeInfo}
+            </td>
+            <td>
+                <div class="score-cell">
+                    <div class="score-bubble ${getScoreClass(score.score)}">
+                        ${score.score}%
+                    </div>
+                </div>
+            </td>
+            <td>${formattedDate}</td>
+            <td><span class="status-badge ${statusClass}">${score.status}</span></td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    // Helper function to get score class based on score value
+    function getScoreClass(score) {
+        if (score >= 90) return 'score-excellent';
+        if (score >= 80) return 'score-great';
+        if (score >= 70) return 'score-good';
+        if (score >= 60) return 'score-fair';
+        if (score >= 50) return 'score-pass';
+        return 'score-fail';
+    }
 }
 
 // Logout function

@@ -31,9 +31,26 @@
                                maxlength="100">
                     </div>
                     <div class="form-group">
+                        <label for="targetField">Target Field</label>
+                        <select id="targetField" name="targetField" required>
+                            <option value="" disabled selected>Select Field</option>
+                            <option value="sma">SMA</option>
+                            <option value="smi">SMI</option>
+                            <option value="bcg">BCG</option>
+                            <option value="spa">SPA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="targetSemester">Target Semester</label>
-                        <input type="text" id="targetSemester" name="targetSemester" 
-                               placeholder="e.g., Fall 2023" required>
+                        <select id="targetSemester" name="targetSemester" required>
+                            <option value="" disabled selected>Select Semester</option>
+                            <option value="1">Semester 1</option>
+                            <option value="2">Semester 2</option>
+                            <option value="3">Semester 3</option>
+                            <option value="4">Semester 4</option>
+                            <option value="5">Semester 5</option>
+                            <option value="6">Semester 6</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="targetGroup">Group (Optional)</label>
@@ -111,6 +128,35 @@
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Add Question</button>
                     <button type="button" class="btn btn-secondary" id="cancelQuestionBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Question Edit Modal -->
+    <div id="questionEditModal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Question</h2>
+            <form id="questionEditForm">
+                <input type="hidden" id="editQuestionIndex" name="editQuestionIndex">
+                <div class="form-group">
+                    <label for="editQuestionText">Question Text</label>
+                    <textarea id="editQuestionText" name="editQuestionText" required></textarea>
+                </div>
+                <div id="editOptionsContainer" class="form-group">
+                    <!-- Dynamically added options for MCQ questions -->
+                </div>
+                <div class="form-group">
+                    <label for="editCorrectAnswer">Correct Answer</label>
+                    <input type="text" id="editCorrectAnswer" name="editCorrectAnswer" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPoints">Points</label>
+                    <input type="number" id="editPoints" name="editPoints" min="0" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
                 </div>
             </form>
         </div>
