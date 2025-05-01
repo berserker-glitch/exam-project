@@ -29,8 +29,7 @@ let examSubmitted = false;
 // Event listeners
 registrationForm.addEventListener('submit', registerUser);
 loginForm.addEventListener('submit', loginUser);
-// Geolocation has been disabled, but keeping the event listener for UI continuity
-activateGeolocationButton.addEventListener('click', skipGeolocation);
+activateGeolocationButton.addEventListener('click', requestGeolocation);
 prevQuestionButton.addEventListener('click', showPreviousQuestion);
 nextQuestionButton.addEventListener('click', showNextQuestion);
 submitExamButton.addEventListener('click', submitExam);
@@ -154,9 +153,8 @@ async function loginUser(event, emailOverride, passwordOverride) {
     
     // If we have an exam ID from URL or form, proceed to load the exam
     if (examId) {
-      fetchExamQuestions(examId);
-      examQuestionsSection.style.display = 'block';
-      examLinkSection.style.display = 'none';
+      // Require geolocation before showing exam - this is the new implementation
+      requireGeolocationForExam(examId);
     } else {
       // Show the exam link input form
       examLinkSection.style.display = 'block';
@@ -199,103 +197,71 @@ async function loginUser(event, emailOverride, passwordOverride) {
   */
 }
 
-// Function to skip geolocation and proceed to the next step
-function skipGeolocation() {
-  // Hide geolocation section
-  geolocationActivationSection.style.display = 'none';
+// Replace skipGeolocation with function that uses our geolocation.js
+function requireGeolocationForExam(examIdOrLink) {
+  console.log("Starting geolocation process before exam...");
   
-  // Check if we have an exam link in the URL
-  const examLink = getExamLinkFromUrl();
-  if (examLink) {
-    // Direct exam access via URL - fetch questions directly
-    fetchExamQuestions(examLink).then(() => {
-      examQuestionsSection.style.display = 'block';
-    }).catch(error => {
-      console.error('Error fetching exam questions:', error);
-      showErrorMessage('Échec du chargement des questions d\'examen. Veuillez réessayer ou contacter le support.');
-    });
+  // Check if geolocation is already approved
+  if (window.isGeolocationApproved && window.isGeolocationApproved()) {
+    console.log("Geolocation already approved, proceeding with exam");
+    proceedWithExam(examIdOrLink);
+    return;
+  }
+  
+  // Hide other sections
+  examLinkSection.style.display = 'none';
+  
+  // Show geolocation panel and wait for approval
+  if (window.requireGeolocation) {
+    window.requireGeolocation()
+      .then(geoData => {
+        console.log("Geolocation approved with data:", geoData);
+        proceedWithExam(examIdOrLink);
+      })
+      .catch(error => {
+        console.error("Geolocation error:", error);
+        examLinkSection.style.display = 'block';
+        showErrorMessage("La géolocalisation est requise pour passer l'examen.");
+      });
   } else {
-    // No exam link, show the exam link input section
+    console.error("Geolocation module not loaded!");
+    showErrorMessage("Erreur de chargement du module de géolocalisation.");
+  }
+}
+
+// New function to proceed after geolocation is approved
+function proceedWithExam(examIdOrLink) {
+  fetchExamQuestions(examIdOrLink);
+  examQuestionsSection.style.display = 'block';
+}
+
+// Update the handleExamLinkSubmit function to use geolocation
+async function handleExamLinkSubmit(event) {
+  event.preventDefault();
+  const examLink = document.getElementById('examLink').value.trim();
+  
+  if (!examLink) {
+    showErrorMessage('Veuillez saisir un lien d\'examen valide.');
+    return;
+  }
+  
+  examId = examLink;
+  
+  // Require geolocation before starting the exam
+  requireGeolocationForExam(examLink);
+}
+
+// Keep existing skipGeolocation function for compatibility but make it use our new system
+function skipGeolocation() {
+  console.log("skipGeolocation called - using new geolocation system instead");
+  
+  // If we already have an exam ID, use it
+  if (examId) {
+    requireGeolocationForExam(examId);
+  } else {
+    // Show the exam link form
     examLinkSection.style.display = 'block';
   }
-}
-
-// Geolocation can be re-enabled if needed
-function getGeolocation() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        const { latitude, longitude } = position.coords;
-        console.log(`User location: ${latitude}, ${longitude}`);
-        sendLocationToBackend(latitude, longitude);
-        skipGeolocation();
-      },
-      error => {
-        console.error('Error retrieving geolocation:', error);
-        
-        // Show appropriate error message based on error code
-        let errorMessage = 'Impossible de récupérer votre position. ';
-        
-        switch(error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage += 'Vous avez refusé l\'accès à votre position. Veuillez activer l\'accès à la localisation dans les paramètres de votre navigateur et réessayer.';
-            break;
-            
-          case error.POSITION_UNAVAILABLE:
-            errorMessage += 'Les informations de localisation ne sont pas disponibles. Veuillez vérifier les paramètres de votre appareil ou essayer un autre appareil.';
-            break;
-            
-          case error.TIMEOUT:
-            errorMessage += 'La demande de géolocalisation a expiré. Veuillez réessayer.';
-            break;
-            
-          default:
-            errorMessage += 'Veuillez autoriser l\'accès à la localisation ou contacter le support.';
-        }
-        
-        showGeolocationError(errorMessage);
-      },
-      { timeout: 10000 }
-    );
-  } else {
-    console.error('Geolocation is not supported by this browser.');
-    showGeolocationError('La géolocalisation n\'est pas prise en charge par votre navigateur. Veuillez utiliser un autre navigateur ou contacter le support.');
-  }
-}
-
-// Function to show geolocation error with retry button
-function showGeolocationError(message) {
-  // Create error container if it doesn't exist
-  let errorContainer = document.getElementById('geolocationErrorContainer');
-  if (!errorContainer) {
-    errorContainer = document.createElement('div');
-    errorContainer.id = 'geolocationErrorContainer';
-    errorContainer.className = 'geolocation-error';
-    geolocationActivationSection.appendChild(errorContainer);
-  }
-  
-  errorContainer.innerHTML = `
-    <p class="error-message">${message}</p>
-    <button type="button" class="btn btn-primary" id="retryGeolocation">
-      <i class="fas fa-redo"></i> Réessayer
-    </button>
-    <button type="button" class="btn btn-secondary" id="skipGeolocation">
-      <i class="fas fa-forward"></i> Passer
-    </button>
-    <div class="geolocation-help">
-      <p>Si vous continuez à avoir des problèmes :</p>
-      <ul>
-        <li>Vérifiez que la localisation est activée sur votre appareil</li>
-        <li>Vérifiez les paramètres de permission de votre navigateur</li>
-        <li>Essayez d'utiliser un autre navigateur</li>
-        <li>Contactez le support technique</li>
-      </ul>
-    </div>
-  `;
-  
-  // Add event listeners to buttons
-  document.getElementById('retryGeolocation').addEventListener('click', getGeolocation);
-  document.getElementById('skipGeolocation').addEventListener('click', skipGeolocation);
 }
 
 function showErrorMessage(message) {
@@ -337,25 +303,6 @@ function showSuccessMessage(message) {
 function getExamLinkFromUrl() {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get('exam');
-}
-
-async function handleExamLinkSubmit(event) {
-  event.preventDefault();
-  const examLink = document.getElementById('examLink').value.trim();
-  
-  if (!examLink) {
-    showErrorMessage('Veuillez saisir un lien d\'examen valide.');
-    return;
-  }
-  
-  try {
-  await fetchExamQuestions(examLink);
-  examLinkSection.style.display = 'none';
-  examQuestionsSection.style.display = 'block';
-  } catch (error) {
-    console.error('Error fetching exam questions:', error);
-    showErrorMessage('Échec du chargement de l\'examen. Veuillez vérifier le lien et réessayer.');
-  }
 }
 
 async function fetchExamQuestions(examLink) {
@@ -1055,20 +1002,19 @@ function showLoginForm() {
 }
 
 async function initializeExam() {
-    // Check if user is logged in
-    const storedUser = localStorage.getItem('currentUser');
-  if (storedUser) {
-      currentUser = JSON.parse(storedUser);
-      
-    // Show verify section with email prefilled
-        userAuthSection.style.display = 'block';
-    document.getElementById('loginRegisterSection').style.display = 'none';
-    document.getElementById('verifySection').style.display = 'block';
-    document.getElementById('userEmailDisplay').textContent = currentUser.email;
-    } else {
-    // User not logged in, show login/register options
-      userAuthSection.style.display = 'block';
-    document.getElementById('loginRegisterSection').style.display = 'block';
-    document.getElementById('verifySection').style.display = 'none';
-    }
+  // Check if user is logged in
+  const token = localStorage.getItem('token');
+  currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  
+  if (token && currentUser) {
+    // User is logged in - proceed to geolocation step
+    console.log("User is logged in, proceeding to geolocation check");
+    userAuthSection.style.display = 'none';
+    requireGeolocationForExam(examId);
+  } else {
+    // User needs to log in first
+    console.log("User needs to log in first");
+    userAuthSection.style.display = 'block';
+    examLinkSection.style.display = 'none';
   }
+}

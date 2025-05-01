@@ -39,20 +39,9 @@ app.use((err, req, res, next) => {
 // Server configuration
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`\n🚀 Server is running on port ${PORT}`);
-    console.log('\n📱 Access the application at:');
+    console.log(`\n Server is running on port ${PORT}`);
     console.log(`   Homepage: http://localhost:${PORT}/views/index.html`);
-    console.log(`   API Endpoint: http://localhost:${PORT}/api`);
-    console.log('\n✨ You can now:');
-    console.log(`   1. Sign up: http://localhost:${PORT}/views/signup.html`);
-    console.log(`   2. Login: http://localhost:${PORT}/views/login.html`);
-    console.log('\n📝 API Documentation:');
-    console.log('   POST /api/auth/register - Register a new user');
-    console.log('   POST /api/auth/login - Login user');
-    console.log('   POST /api/auth/logout - Logout user');
-    console.log('   GET /api/users - Get all users');
-    console.log('   GET /api/users/:id - Get user by ID');
-    console.log('   GET /api/users/me - Get current user');
-    console.log('   GET /api/exams/scores/me - Get current user exam scores');
-    console.log('   POST /api/exams/scores - Save an exam score\n');
+    console.log(`   Sign up: http://localhost:${PORT}/views/signup.html`);
+    console.log(`   Login: http://localhost:${PORT}/views/login.html`);
+
 });
