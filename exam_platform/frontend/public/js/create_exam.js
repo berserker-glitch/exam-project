@@ -395,6 +395,10 @@ function displayQuestion(question, index) {
     const timerDisplay = question.timer ? 
                        `<span class="question-timer"><i class="fas fa-clock"></i> ${question.timer} secondes</span>` : '';
     
+    // Format tolerance display for direct questions
+    const toleranceDisplay = (question.type === 'direct' && question.tolerance) ? 
+                           `<span class="question-tolerance"><i class="fas fa-percentage"></i> Tolérance: ${question.tolerance}%</span>` : '';
+    
     // Create question HTML with edit and delete buttons
     questionElement.innerHTML = `
         <div class="question-header">
@@ -412,6 +416,7 @@ function displayQuestion(question, index) {
             <span class="question-type">${typeLabel}</span>
             <span class="question-points">${question.points} points</span>
             ${timerDisplay}
+            ${toleranceDisplay}
         </div>
         <p class="question-text">${question.text}</p>
     `;
@@ -902,4 +907,114 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(styleElement);
-}); 
+
+    // Media upload preview for question creation
+    const mediaFileInput = document.getElementById('mediaFile');
+    const mediaTypeInputs = document.querySelectorAll('input[name="mediaType"]');
+    const mediaPreview = document.getElementById('mediaPreview');
+    
+    if (mediaFileInput) {
+        mediaFileInput.addEventListener('change', function() {
+            previewMedia(this, mediaPreview);
+        });
+    }
+    
+    mediaTypeInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateMediaAcceptType(mediaFileInput, this.value);
+            clearMediaPreview(mediaPreview);
+        });
+    });
+    
+    // Media upload preview for question editing
+    const editMediaFileInput = document.getElementById('editMediaFile');
+    const editMediaTypeInputs = document.querySelectorAll('input[name="editMediaType"]');
+    const editMediaPreview = document.getElementById('editMediaPreview');
+    
+    if (editMediaFileInput) {
+        editMediaFileInput.addEventListener('change', function() {
+            previewMedia(this, editMediaPreview);
+        });
+    }
+    
+    editMediaTypeInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateMediaAcceptType(editMediaFileInput, this.value);
+            clearMediaPreview(editMediaPreview);
+        });
+    });
+});
+
+// Update the accept attribute of file input based on selected media type
+function updateMediaAcceptType(fileInput, mediaType) {
+    if (!fileInput) return;
+    
+    switch (mediaType) {
+        case 'image':
+            fileInput.setAttribute('accept', 'image/*');
+            break;
+        case 'audio':
+            fileInput.setAttribute('accept', 'audio/*');
+            break;
+        case 'video':
+            fileInput.setAttribute('accept', 'video/*');
+            break;
+        default:
+            fileInput.setAttribute('accept', 'image/*,audio/*,video/*');
+    }
+}
+
+// Preview uploaded media
+function previewMedia(fileInput, previewElement) {
+    if (!fileInput || !previewElement) return;
+    
+    const file = fileInput.files[0];
+    if (!file) {
+        clearMediaPreview(previewElement);
+        return;
+    }
+    
+    // Clear previous preview
+    clearMediaPreview(previewElement);
+    
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showErrorMessage('Le fichier est trop volumineux. Taille maximale: 10MB');
+        fileInput.value = '';
+        return;
+    }
+    
+    const fileType = file.type.split('/')[0];
+    const fileURL = URL.createObjectURL(file);
+    
+    switch (fileType) {
+        case 'image':
+            const img = document.createElement('img');
+            img.src = fileURL;
+            img.alt = 'Question Image';
+            previewElement.appendChild(img);
+            break;
+        case 'audio':
+            const audio = document.createElement('audio');
+            audio.src = fileURL;
+            audio.controls = true;
+            previewElement.appendChild(audio);
+            break;
+        case 'video':
+            const video = document.createElement('video');
+            video.src = fileURL;
+            video.controls = true;
+            video.style.maxWidth = '100%';
+            previewElement.appendChild(video);
+            break;
+        default:
+            showErrorMessage('Type de fichier non supporté');
+            fileInput.value = '';
+    }
+}
+
+// Clear media preview
+function clearMediaPreview(previewElement) {
+    if (!previewElement) return;
+    previewElement.innerHTML = '';
+} 

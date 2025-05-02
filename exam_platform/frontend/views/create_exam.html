@@ -122,6 +122,33 @@
                     <label for="questionText">Texte de la Question</label>
                     <textarea id="questionText" name="questionText" required></textarea>
                 </div>
+                
+                <!-- Media Upload Section -->
+                <div class="form-group">
+                    <label>Pièce Jointe (Optionnel)</label>
+                    <div class="media-upload-container">
+                        <div class="media-type-selector">
+                            <label class="media-type-label">
+                                <input type="radio" name="mediaType" value="image" checked>
+                                <span><i class="fas fa-image"></i> Image</span>
+                            </label>
+                            <label class="media-type-label">
+                                <input type="radio" name="mediaType" value="audio">
+                                <span><i class="fas fa-volume-up"></i> Audio</span>
+                            </label>
+                            <label class="media-type-label">
+                                <input type="radio" name="mediaType" value="video">
+                                <span><i class="fas fa-video"></i> Vidéo</span>
+                            </label>
+                        </div>
+                        <div class="media-upload-input">
+                            <input type="file" id="mediaFile" name="mediaFile" accept="image/*,audio/*,video/*">
+                            <small class="field-hint">Formats supportés: JPG, PNG, MP3, MP4 (max 10MB)</small>
+                        </div>
+                        <div id="mediaPreview" class="media-preview"></div>
+                    </div>
+                </div>
+                
                 <div id="optionsContainer" class="form-group">
                     <!-- Dynamically added options for MCQ questions -->
                 </div>
@@ -161,6 +188,33 @@
                     <label for="editQuestionText">Texte de la Question</label>
                     <textarea id="editQuestionText" name="editQuestionText" required></textarea>
                 </div>
+                
+                <!-- Media Upload Section -->
+                <div class="form-group">
+                    <label>Pièce Jointe (Optionnel)</label>
+                    <div class="media-upload-container">
+                        <div class="media-type-selector">
+                            <label class="media-type-label">
+                                <input type="radio" name="editMediaType" value="image" checked>
+                                <span><i class="fas fa-image"></i> Image</span>
+                            </label>
+                            <label class="media-type-label">
+                                <input type="radio" name="editMediaType" value="audio">
+                                <span><i class="fas fa-volume-up"></i> Audio</span>
+                            </label>
+                            <label class="media-type-label">
+                                <input type="radio" name="editMediaType" value="video">
+                                <span><i class="fas fa-video"></i> Vidéo</span>
+                            </label>
+                        </div>
+                        <div class="media-upload-input">
+                            <input type="file" id="editMediaFile" name="editMediaFile" accept="image/*,audio/*,video/*">
+                            <small class="field-hint">Formats supportés: JPG, PNG, MP3, MP4 (max 10MB)</small>
+                        </div>
+                        <div id="editMediaPreview" class="media-preview"></div>
+                    </div>
+                </div>
+                
                 <div id="editOptionsContainer" class="form-group">
                     <!-- Dynamically added options for MCQ questions -->
                 </div>
