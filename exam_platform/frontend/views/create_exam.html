@@ -129,6 +129,16 @@
                     <label for="correctAnswer">Réponse Correcte</label>
                     <input type="text" id="correctAnswer" name="correctAnswer" required>
                 </div>
+                <div id="toleranceContainer" class="form-group" style="display: none;">
+                    <label for="answerTolerance">Taux de Tolérance (%)</label>
+                    <input type="number" id="answerTolerance" name="answerTolerance" min="0" max="100" value="10">
+                    <small class="field-hint">Pourcentage de tolérance pour les erreurs de frappe ou casse (0-100%)</small>
+                </div>
+                <div class="form-group">
+                    <label for="questionTimer">Durée de la Question (secondes)</label>
+                    <input type="number" id="questionTimer" name="questionTimer" min="5" max="600" required value="60">
+                    <small class="field-hint">Temps alloué pour répondre à cette question (5-600 secondes)</small>
+                </div>
                 <div class="form-group">
                     <label for="points">Points</label>
                     <input type="number" id="points" name="points" min="0" required>
@@ -157,6 +167,16 @@
                 <div class="form-group">
                     <label for="editCorrectAnswer">Réponse Correcte</label>
                     <input type="text" id="editCorrectAnswer" name="editCorrectAnswer" required>
+                </div>
+                <div id="editToleranceContainer" class="form-group" style="display: none;">
+                    <label for="editAnswerTolerance">Taux de Tolérance (%)</label>
+                    <input type="number" id="editAnswerTolerance" name="editAnswerTolerance" min="0" max="100" value="10">
+                    <small class="field-hint">Pourcentage de tolérance pour les erreurs de frappe ou casse (0-100%)</small>
+                </div>
+                <div class="form-group">
+                    <label for="editQuestionTimer">Durée de la Question (secondes)</label>
+                    <input type="number" id="editQuestionTimer" name="editQuestionTimer" min="5" max="600" required>
+                    <small class="field-hint">Temps alloué pour répondre à cette question (5-600 secondes)</small>
                 </div>
                 <div class="form-group">
                     <label for="editPoints">Points</label>

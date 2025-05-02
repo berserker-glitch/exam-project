@@ -166,6 +166,10 @@ function openQuestionCreationModal(questionType) {
 
     const optionsContainer = document.getElementById('optionsContainer');
     optionsContainer.innerHTML = '';
+    
+    // Show/hide tolerance field based on question type
+    const toleranceContainer = document.getElementById('toleranceContainer');
+    toleranceContainer.style.display = questionType === 'direct' ? 'block' : 'none';
 
     if (questionType === 'mcq') {
         const optionInputs = `
@@ -212,12 +216,23 @@ function openQuestionEditModal(questionIndex) {
     if (!question) return;
 
     questionEditModal.style.display = 'block';
+    questionEditForm.dataset.questionType = question.type;
     
     // Set form fields
     document.getElementById('editQuestionIndex').value = questionIndex;
     document.getElementById('editQuestionText').value = question.text;
     document.getElementById('editCorrectAnswer').value = question.correctAnswer;
     document.getElementById('editPoints').value = question.points;
+    document.getElementById('editQuestionTimer').value = question.timer || 60;
+    
+    // Show/hide tolerance field based on question type
+    const editToleranceContainer = document.getElementById('editToleranceContainer');
+    editToleranceContainer.style.display = question.type === 'direct' ? 'block' : 'none';
+    
+    // Set tolerance value if it exists
+    if (question.type === 'direct') {
+        document.getElementById('editAnswerTolerance').value = question.tolerance || 10;
+    }
 
     const editOptionsContainer = document.getElementById('editOptionsContainer');
     editOptionsContainer.innerHTML = '';
@@ -265,128 +280,105 @@ function closeQuestionEditModal() {
     questionEditForm.reset();
 }
 
-// Handle question form submission
-async function handleQuestionSubmit(event) {
-    event.preventDefault();
-
-    const questionType = questionForm.dataset.questionType;
-    const questionText = document.getElementById('questionText').value.trim();
-    const correctAnswer = document.getElementById('correctAnswer').value.trim();
-    const points = parseInt(document.getElementById('points').value);
-
-    if (!validateQuestionDetails(questionText, correctAnswer, points)) {
-        return;
-    }
-
-    const question = {
-        id: generateUUID(),
-        type: questionType,
-        text: questionText,
-        correctAnswer: correctAnswer,
-        points: points
-    };
-
-    if (questionType === 'mcq') {
-        const options = [];
-        const optionInputs = document.querySelectorAll('#mcqOptions input[type="text"]');
-        optionInputs.forEach(input => {
-            options.push(input.value.trim());
-        });
-        question.options = options;
-    }
-
-    examData.questions.push(question);
-    displayQuestion(question, examData.questions.length - 1);
-    closeQuestionCreationModal();
-}
-
-// Handle question edit form submission
-async function handleQuestionEdit(event) {
-    event.preventDefault();
-
-    const questionIndex = parseInt(document.getElementById('editQuestionIndex').value);
-    const questionText = document.getElementById('editQuestionText').value.trim();
-    const correctAnswer = document.getElementById('editCorrectAnswer').value.trim();
-    const points = parseInt(document.getElementById('editPoints').value);
-
-    if (!validateQuestionDetails(questionText, correctAnswer, points)) {
-        return;
-    }
-
-    const question = examData.questions[questionIndex];
-    if (!question) return;
-
-    question.text = questionText;
-    question.correctAnswer = correctAnswer;
-    question.points = points;
-
-    if (question.type === 'mcq') {
-        const options = [];
-        const optionInputs = document.querySelectorAll('#editMcqOptions input[type="text"]');
-        optionInputs.forEach(input => {
-            options.push(input.value.trim());
-        });
-        question.options = options;
-    }
-
-    // Update the question display
-    updateQuestionDisplay(question, questionIndex);
-    closeQuestionEditModal();
-}
-
-// Update question display after edit
-function updateQuestionDisplay(question, index) {
-    const questionElement = document.getElementById(`question-${index}`);
-    if (!questionElement) return;
-
-    const questionHeader = questionElement.querySelector('.question-header h3');
-    if (questionHeader) {
-        questionHeader.textContent = `Question ${index + 1}`;
-    }
-
-    const questionText = questionElement.querySelector('.question-text');
-    if (questionText) {
-        questionText.textContent = question.text;
-    }
-
-    // Update points display
-    const pointsDisplay = questionElement.querySelector('.question-points');
-    if (pointsDisplay) {
-        pointsDisplay.textContent = `${question.points} points`;
-    }
-
-    // Update options for MCQ questions
-    if (question.type === 'mcq' && question.options) {
-        const optionsList = questionElement.querySelector('.question-options');
-        if (optionsList) {
-            optionsList.innerHTML = '';
-            question.options.forEach(option => {
-                const optionItem = document.createElement('li');
-                optionItem.textContent = option;
-                optionsList.appendChild(optionItem);
-            });
-        }
-    }
-}
-
 // Validate question details
-function validateQuestionDetails(questionText, correctAnswer, points) {
-    if (questionText === '') {
-        showErrorMessage('Veuillez saisir le texte de la question.');
+function validateQuestionDetails(questionText, correctAnswer, points, timer) {
+    if (questionText.trim() === '') {
+        showErrorMessage('Veuillez entrer le texte de la question.');
         return false;
     }
 
-    if (correctAnswer === '') {
-        showErrorMessage('Veuillez saisir la réponse correcte.');
+    if (correctAnswer.trim() === '') {
+        showErrorMessage('Veuillez entrer la réponse correcte.');
         return false;
     }
 
     if (isNaN(points) || points < 0) {
-        showErrorMessage('Veuillez saisir un nombre valide de points.');
+        showErrorMessage('Veuillez entrer un nombre de points valide.');
+        return false;
+    }
+    
+    if (isNaN(timer) || timer < 5 || timer > 600) {
+        showErrorMessage('Veuillez entrer une durée valide pour la question (entre 5 et 600 secondes).');
         return false;
     }
 
     return true;
+}
+
+// Handle question submission
+async function handleQuestionSubmit(event) {
+    event.preventDefault();
+
+    const questionType = questionForm.dataset.questionType;
+    const questionText = document.getElementById('questionText').value;
+    const points = parseInt(document.getElementById('points').value);
+    const questionTimer = parseInt(document.getElementById('questionTimer').value);
+    let correctAnswer = document.getElementById('correctAnswer').value;
+
+    if (!validateQuestionDetails(questionText, correctAnswer, points, questionTimer)) {
+        return;
+    }
+
+    const question = {
+        type: questionType,
+        text: questionText,
+        correctAnswer: correctAnswer,
+        points: points,
+        timer: questionTimer
+    };
+
+    if (questionType === 'mcq') {
+        const mcqOptions = document.querySelectorAll('#mcqOptions .mcq-option input');
+        const options = Array.from(mcqOptions).map(option => option.value);
+        question.options = options;
+    } else if (questionType === 'direct') {
+        // Add tolerance for direct questions
+        const tolerance = parseInt(document.getElementById('answerTolerance').value) || 10;
+        question.tolerance = tolerance;
+    }
+
+    examData.questions.push(question);
+    refreshQuestionDisplay();
+    closeQuestionCreationModal();
+    questionForm.reset();
+}
+
+// Handle question edit
+async function handleQuestionEdit(event) {
+    event.preventDefault();
+
+    const questionIndex = parseInt(document.getElementById('editQuestionIndex').value);
+    const questionType = questionEditForm.dataset.questionType;
+    const questionText = document.getElementById('editQuestionText').value;
+    const points = parseInt(document.getElementById('editPoints').value);
+    const questionTimer = parseInt(document.getElementById('editQuestionTimer').value);
+    let correctAnswer = document.getElementById('editCorrectAnswer').value;
+
+    if (!validateQuestionDetails(questionText, correctAnswer, points, questionTimer)) {
+        return;
+    }
+
+    const question = {
+        type: questionType,
+        text: questionText,
+        correctAnswer: correctAnswer,
+        points: points,
+        timer: questionTimer
+    };
+
+    if (questionType === 'mcq') {
+        const mcqOptions = document.querySelectorAll('#editOptionsContainer #editMcqOptions .mcq-option input');
+        const options = Array.from(mcqOptions).map(option => option.value);
+        question.options = options;
+    } else if (questionType === 'direct') {
+        // Add tolerance for direct questions
+        const tolerance = parseInt(document.getElementById('editAnswerTolerance').value) || 10;
+        question.tolerance = tolerance;
+    }
+
+    examData.questions[questionIndex] = question;
+    refreshQuestionDisplay();
+    closeQuestionEditModal();
 }
 
 // Display question in the UI
@@ -398,6 +390,10 @@ function displayQuestion(question, index) {
     // Define question type label
     const typeLabel = question.type === 'mcq' ? 
                      'Choix Multiple' : 'Réponse Directe';
+    
+    // Format timer display
+    const timerDisplay = question.timer ? 
+                       `<span class="question-timer"><i class="fas fa-clock"></i> ${question.timer} secondes</span>` : '';
     
     // Create question HTML with edit and delete buttons
     questionElement.innerHTML = `
@@ -415,6 +411,7 @@ function displayQuestion(question, index) {
         <div class="question-meta">
             <span class="question-type">${typeLabel}</span>
             <span class="question-points">${question.points} points</span>
+            ${timerDisplay}
         </div>
         <p class="question-text">${question.text}</p>
     `;
