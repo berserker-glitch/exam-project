@@ -1,168 +1,124 @@
-# Exam Platform
+# Plateforme d'Examen
 
-A comprehensive web-based examination platform built with Node.js, MySQL, and modern web technologies. This platform allows instructors to create, manage, and share exams while students can securely take exams and track their progress.
+Une plateforme d'examen complète basée sur le web, construite avec Node.js, MySQL et des technologies web modernes. Cette plateforme permet aux instructeurs de créer, gérer et partager des examens tandis que les étudiants peuvent passer des examens en toute sécurité et suivre leur progression.
 
-## Features
+## Fonctionnalités
 
-### User System
-- User Registration and Authentication
-- Secure JWT-based Authentication
-- Password Strength Validation
-- Simplified Verification Process
-- User Profile Management
+### Système Utilisateur
+- Inscription et authentification des utilisateurs
+- Authentification sécurisée basée sur JWT
+- Validation de la complexité des mots de passe
+- Processus de vérification simplifié
+- Gestion des profils utilisateurs
 
-### Exam Management
-- Create Custom Exams with Multiple Question Types
-- Multiple-Choice Questions (MCQ) Support
-- Direct Answer Questions Support
-- Question Bank Management
-- Exam Sharing via Unique Access Links
-- Real-time Question Navigation
-- Answer Tracking and Progress Indicators
+### Gestion des Examens
+- Création d'examens personnalisés avec plusieurs types de questions
+- Prise en charge des questions à choix multiples (QCM)
+- Prise en charge des questions à réponse directe
+- Gestion de la banque de questions
+- Partage d'examens via des liens d'accès uniques
+- Navigation en temps réel entre les questions
+- Suivi des réponses et indicateurs de progression
 
-### Student Experience
-- Intuitive Exam Taking Interface
-- Interactive Question Navigation
-- Real-time Answer Saving
-- Automatic Exam Submission
-- Detailed Score Reports
-- Exam History and Performance Tracking
+### Expérience Étudiant
+- Interface intuitive pour passer les examens
+- Navigation interactive entre les questions
+- Sauvegarde des réponses en temps réel
+- Soumission automatique des examens
+- Rapports de scores détaillés
+- Historique des examens et suivi des performances
 
-### Dashboard and Analytics
-- User Dashboard with Exam Statistics
-- Performance Tracking and Analysis
-- Detailed Exam Scores with Categorization
-- Historical Performance Trends
+### Tableau de Bord et Analyses
+- Tableau de bord utilisateur avec statistiques d'examen
+- Suivi et analyse des performances
+- Scores d'examen détaillés avec catégorisation
+- Tendances historiques des performances
 
-## Prerequisites
-Before you begin, ensure you have the following installed:
-- Node.js (v14.0 or higher)
-- MySQL (v8.0 or higher)
-- npm (v6.0 or higher)
+### Sécurité et Vérification
+- **Géolocalisation pour les examens**: Vérification de la position géographique avant de passer un examen
+- Contrôle d'accès basé sur la localisation
+- Journalisation des données de localisation pour la sécurité
 
-## Installation and Setup
+## Prérequis
+Avant de commencer, assurez-vous d'avoir installé:
+- Node.js (v14.0 ou supérieur)
+- MySQL (v8.0 ou supérieur)
+- npm (v6.0 ou supérieur)
 
-### Database Setup
-1. Log in to MySQL as root:
-```bash
-mysql -u root -p
-```
-
-2. Copy and paste the contents of `database.sql` into your MySQL prompt, or run:
-```bash
-mysql -u root -p < database.sql
-```
-
-This will:
-- Create the exam_platform database
-- Set up all necessary tables (users, exams, questions, etc.)
-- Create required indexes
-- Add a test user (email: test@example.com, password: Test@123)
-
-### Application Setup
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/exam_platform.git
-cd exam_platform
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file in the root directory with the following variables:
-```
-DB_HOST=localhost
-DB_USER=your_mysql_username
-DB_PASSWORD=your_mysql_password
-DB_NAME=exam_platform
-JWT_SECRET=your_jwt_secret_key
-PORT=3000
-```
-
-4. Start the server:
-```bash
-npm start
-```
-
-5. Access the application at `http://localhost:3000`
-
-## Project Structure
+## Structure du Projet
 ```
 exam_platform/
 ├── backend/
 │   ├── config/
-│   │   ├── db.js          # Database connection configuration
-│   │   └── config.js      # General configuration settings
+│   │   ├── db.js          # Configuration de connexion à la base de données
+│   │   └── config.js      # Paramètres de configuration généraux
 │   ├── controllers/
-│   │   ├── auth.js        # Authentication controller
-│   │   └── exams.js       # Exam management controller
+│   │   ├── auth.js        # Contrôleur d'authentification
+│   │   └── exams.js       # Contrôleur de gestion des examens
 │   ├── middleware/
-│   │   └── auth.js        # Authentication middleware
+│   │   └── auth.js        # Middleware d'authentification
 │   ├── routes/
-│   │   ├── auth.js        # Authentication routes
-│   │   └── exams.js       # Exam management routes
-│   └── server.js          # Main server file
+│   │   ├── auth.js        # Routes d'authentification
+│   │   └── exams.js       # Routes de gestion des examens
+│   └── server.js          # Fichier principal du serveur
 ├── frontend/
 │   ├── public/
 │   │   ├── css/
-│   │   │   └── style.css  # Main stylesheet
+│   │   │   └── style.css  # Feuille de style principale
 │   │   ├── js/
-│   │   │   ├── main.js              # Core functionality & authentication
-│   │   │   ├── create_exam.js       # Exam creation functionality
-│   │   │   ├── take_exam.js         # Exam taking functionality
-│   │   │   └── exams.js             # Exam listing and management
-│   │   └── images/                  # Image assets
+│   │   │   ├── main.js              # Fonctionnalités principales & authentification
+│   │   │   ├── create_exam.js       # Fonctionnalité de création d'examen
+│   │   │   ├── take_exam.js         # Fonctionnalité de passage d'examen
+│   │   │   ├── geolocation.js       # Gestion de la géolocalisation pour les examens
+│   │   │   └── exams.js             # Gestion et liste des examens
+│   │   └── images/                  # Ressources d'images
 │   └── views/
-│       ├── index.html              # Landing page
-│       ├── login.html              # Login page
-│       ├── signup.html             # Registration page
-│       ├── dashboard.html          # User dashboard
-│       ├── create_exam.html        # Exam creation page
-│       ├── take_exam.html          # Exam taking page
-│       └── exams.html              # Exam listing page
-├── database.sql                    # Database schema and setup
-├── package.json                    # Project dependencies
-└── README.md                       # Project documentation
+│       ├── index.html              # Page d'accueil
+│       ├── login.html              # Page de connexion
+│       ├── signup.html             # Page d'inscription
+│       ├── dashboard.html          # Tableau de bord utilisateur
+│       ├── create_exam.html        # Page de création d'examen
+│       ├── take_exam.html          # Page de passage d'examen
+│       └── exams.html              # Page de liste des examens
+├── database.sql                    # Schéma et configuration de la base de données
+├── package.json                    # Dépendances du projet
+└── README.md                       # Documentation du projet
 ```
 
-## Key Components
+## Composants Clés
 
 ### Backend
-- **Authentication System**: JWT-based authentication with password hashing
-- **Exam Management**: Create, read, update, and delete exam functionality
-- **Question Processing**: Handles various question types and scoring
-- **API Endpoints**: RESTful API for all platform features
+- **Système d'Authentification**: Authentification basée sur JWT avec hachage de mot de passe
+- **Gestion des Examens**: Fonctionnalités de création, lecture, mise à jour et suppression d'examens
+- **Traitement des Questions**: Gestion de divers types de questions et notation
+- **Points d'API**: API RESTful pour toutes les fonctionnalités de la plateforme
+- **Validation de Géolocalisation**: Vérification de la localisation de l'utilisateur pendant les examens
 
 ### Frontend
-- **Modern UI**: Clean, responsive interface built with CSS3 and HTML5
-- **Interactive Components**: Dynamic question navigation, real-time answer saving
-- **Client-side Validation**: Form validation and data integrity checks
-- **Local Storage**: Temporary exam data storage for offline capability
+- **Interface Utilisateur Moderne**: Interface propre et responsive construite avec CSS3 et HTML5
+- **Composants Interactifs**: Navigation dynamique entre les questions, sauvegarde des réponses en temps réel
+- **Validation Côté Client**: Validation des formulaires et vérification de l'intégrité des données
+- **Stockage Local**: Stockage temporaire des données d'examen pour la capacité hors ligne
+- **Gestion de la Géolocalisation**: Interface pour activer et autoriser la géolocalisation
 
-## Dependencies
-The project uses the following main dependencies:
-- express: Web application framework
-- mysql2: MySQL client for Node.js
-- bcrypt: Password hashing library
-- jsonwebtoken: JWT implementation
-- dotenv: Environment variable management
+## Fonctionnalité de Géolocalisation
+La plateforme utilise la géolocalisation pour:
+- Vérifier l'emplacement des étudiants avant de passer un examen
+- Assurer l'intégrité académique en vérifiant la présence physique
+- Suivre les tentatives d'examen pour la sécurité
 
-## Development and Contribution
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit your changes: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature-name`
-5. Submit a pull request
+### Comment ça fonctionne
+1. Lorsqu'un étudiant commence un examen, il doit autoriser l'accès à sa localisation
+2. Le navigateur demande la permission d'accéder à la géolocalisation
+3. Une fois autorisé, l'examen peut commencer
+4. Les données de localisation sont enregistrées pour référence future
+5. La géolocalisation est requise pour chaque session d'examen
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Dépendances
+Le projet utilise les dépendances principales suivantes:
+- express: Framework d'application web
+- mysql2: Client MySQL pour Node.js
+- bcrypt: Bibliothèque de hachage de mot de passe
+- jsonwebtoken: Implémentation JWT
+- dotenv: Gestion des variables d'environnement
 
-## Acknowledgements
-- Thanks to all contributors who have helped shape this platform
-- Special thanks to the open-source community for their invaluable tools and libraries
-
----
-
-For any questions or issues, please open an issue in the GitHub repository.
