@@ -208,6 +208,9 @@ function requireGeolocationForExam(examIdOrLink) {
     return;
   }
   
+  // Store the exam ID for geolocation reference
+  localStorage.setItem('currentExamId', examIdOrLink);
+  
   // Hide other sections
   examLinkSection.style.display = 'none';
   
@@ -216,6 +219,32 @@ function requireGeolocationForExam(examIdOrLink) {
     window.requireGeolocation()
       .then(geoData => {
         console.log("Geolocation approved with data:", geoData);
+        
+        // Store the geolocation data in localStorage
+        const locationData = {
+          exam_id: examIdOrLink,
+          user_email: currentUser ? currentUser.email : 'unknown',
+          latitude: geoData.latitude,
+          longitude: geoData.longitude,
+          accuracy: geoData.accuracy,
+          timestamp: geoData.timestamp,
+          user_agent: navigator.userAgent
+        };
+        
+        // Log the data in the terminal with a special format
+        console.log("%c STUDENT LOCATION DATA - SAVE THIS INFORMATION", "background: #e74c3c; color: white; font-size: 16px; font-weight: bold; padding: 4px;");
+        console.log(JSON.stringify(locationData, null, 2));
+        
+        // Store location in localStorage for reference
+        try {
+          // Get existing locations or initialize empty array
+          const locations = JSON.parse(localStorage.getItem('examLocations') || '[]');
+          locations.push(locationData);
+          localStorage.setItem('examLocations', JSON.stringify(locations));
+        } catch (e) {
+          console.error("Error storing location data:", e);
+        }
+        
         proceedWithExam(examIdOrLink);
       })
       .catch(error => {

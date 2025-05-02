@@ -233,7 +233,48 @@ function openQuestionEditModal(questionIndex) {
     if (question.type === 'direct') {
         document.getElementById('editAnswerTolerance').value = question.tolerance || 10;
     }
+    
+    // Display existing media if any
+    if (question.media) {
+        const editMediaPreview = document.getElementById('editMediaPreview');
+        clearMediaPreview(editMediaPreview);
+        
+        // Set the correct media type radio button
+        const mediaTypeRadio = document.querySelector(`input[name="editMediaType"][value="${question.media.type}"]`);
+        if (mediaTypeRadio) {
+            mediaTypeRadio.checked = true;
+        }
+        
+        // Display the media preview
+        if (question.media.dataURL) {
+            switch (question.media.type) {
+                case 'image':
+                    const img = document.createElement('img');
+                    img.src = question.media.dataURL;
+                    img.alt = 'Question Image';
+                    editMediaPreview.appendChild(img);
+                    break;
+                case 'audio':
+                    const audio = document.createElement('audio');
+                    audio.src = question.media.dataURL;
+                    audio.controls = true;
+                    editMediaPreview.appendChild(audio);
+                    break;
+                case 'video':
+                    const video = document.createElement('video');
+                    video.src = question.media.dataURL;
+                    video.controls = true;
+                    video.style.maxWidth = '100%';
+                    editMediaPreview.appendChild(video);
+                    break;
+            }
+        }
+    } else {
+        // No media, clear the preview
+        clearMediaPreview(document.getElementById('editMediaPreview'));
+    }
 
+    // Handle MCQ options
     const editOptionsContainer = document.getElementById('editOptionsContainer');
     editOptionsContainer.innerHTML = '';
 
@@ -327,20 +368,50 @@ async function handleQuestionSubmit(event) {
         timer: questionTimer
     };
 
-    if (questionType === 'mcq') {
-        const mcqOptions = document.querySelectorAll('#mcqOptions .mcq-option input');
-        const options = Array.from(mcqOptions).map(option => option.value);
-        question.options = options;
-    } else if (questionType === 'direct') {
-        // Add tolerance for direct questions
-        const tolerance = parseInt(document.getElementById('answerTolerance').value) || 10;
-        question.tolerance = tolerance;
+    // Handle media file
+    const mediaFile = document.getElementById('mediaFile').files[0];
+    if (mediaFile) {
+        const mediaType = document.querySelector('input[name="mediaType"]:checked').value;
+        const fileReader = new FileReader();
+        
+        fileReader.onload = function(e) {
+            // In a real application, you would upload the file to a server
+            // For this demo, we'll store the data URL in the question object
+            question.media = {
+                type: mediaType,
+                dataURL: e.target.result,
+                filename: mediaFile.name
+            };
+            
+            // Continue with question creation
+            finalizeQuestionCreation(question);
+        };
+        
+        fileReader.readAsDataURL(mediaFile);
+    } else {
+        // No media file, continue with question creation
+        finalizeQuestionCreation(question);
     }
 
-    examData.questions.push(question);
-    refreshQuestionDisplay();
-    closeQuestionCreationModal();
-    questionForm.reset();
+    function finalizeQuestionCreation(question) {
+        if (questionType === 'mcq') {
+            const mcqOptions = document.querySelectorAll('#mcqOptions .mcq-option input');
+            const options = Array.from(mcqOptions).map(option => option.value);
+            question.options = options;
+        } else if (questionType === 'direct') {
+            // Add tolerance for direct questions
+            const tolerance = parseInt(document.getElementById('answerTolerance').value) || 10;
+            question.tolerance = tolerance;
+        }
+
+        examData.questions.push(question);
+        refreshQuestionDisplay();
+        closeQuestionCreationModal();
+        questionForm.reset();
+        
+        // Clear media preview
+        clearMediaPreview(document.getElementById('mediaPreview'));
+    }
 }
 
 // Handle question edit
@@ -358,27 +429,60 @@ async function handleQuestionEdit(event) {
         return;
     }
 
+    // Start with existing question to preserve media if not changed
+    const existingQuestion = examData.questions[questionIndex] || {};
     const question = {
         type: questionType,
         text: questionText,
         correctAnswer: correctAnswer,
         points: points,
-        timer: questionTimer
+        timer: questionTimer,
+        media: existingQuestion.media // Keep existing media by default
     };
 
-    if (questionType === 'mcq') {
-        const mcqOptions = document.querySelectorAll('#editOptionsContainer #editMcqOptions .mcq-option input');
-        const options = Array.from(mcqOptions).map(option => option.value);
-        question.options = options;
-    } else if (questionType === 'direct') {
-        // Add tolerance for direct questions
-        const tolerance = parseInt(document.getElementById('editAnswerTolerance').value) || 10;
-        question.tolerance = tolerance;
+    // Handle media file
+    const mediaFile = document.getElementById('editMediaFile').files[0];
+    if (mediaFile) {
+        const mediaType = document.querySelector('input[name="editMediaType"]:checked').value;
+        const fileReader = new FileReader();
+        
+        fileReader.onload = function(e) {
+            // In a real application, you would upload the file to a server
+            // For this demo, we'll store the data URL in the question object
+            question.media = {
+                type: mediaType,
+                dataURL: e.target.result,
+                filename: mediaFile.name
+            };
+            
+            // Continue with question update
+            finalizeQuestionEdit(question);
+        };
+        
+        fileReader.readAsDataURL(mediaFile);
+    } else {
+        // No new media file, continue with question update
+        finalizeQuestionEdit(question);
     }
 
-    examData.questions[questionIndex] = question;
-    refreshQuestionDisplay();
-    closeQuestionEditModal();
+    function finalizeQuestionEdit(question) {
+        if (questionType === 'mcq') {
+            const mcqOptions = document.querySelectorAll('#editOptionsContainer #editMcqOptions .mcq-option input');
+            const options = Array.from(mcqOptions).map(option => option.value);
+            question.options = options;
+        } else if (questionType === 'direct') {
+            // Add tolerance for direct questions
+            const tolerance = parseInt(document.getElementById('editAnswerTolerance').value) || 10;
+            question.tolerance = tolerance;
+        }
+
+        examData.questions[questionIndex] = question;
+        refreshQuestionDisplay();
+        closeQuestionEditModal();
+        
+        // Clear media preview
+        clearMediaPreview(document.getElementById('editMediaPreview'));
+    }
 }
 
 // Display question in the UI
@@ -420,6 +524,35 @@ function displayQuestion(question, index) {
         </div>
         <p class="question-text">${question.text}</p>
     `;
+    
+    // Add media preview if available
+    if (question.media && question.media.dataURL) {
+        const mediaContainer = document.createElement('div');
+        mediaContainer.className = 'question-media';
+        
+        switch (question.media.type) {
+            case 'image':
+                mediaContainer.innerHTML = `
+                    <div class="media-badge"><i class="fas fa-image"></i> Image jointe</div>
+                    <img src="${question.media.dataURL}" alt="Question Image" class="media-thumbnail">
+                `;
+                break;
+            case 'audio':
+                mediaContainer.innerHTML = `
+                    <div class="media-badge"><i class="fas fa-volume-up"></i> Audio joint</div>
+                    <audio src="${question.media.dataURL}" controls></audio>
+                `;
+                break;
+            case 'video':
+                mediaContainer.innerHTML = `
+                    <div class="media-badge"><i class="fas fa-video"></i> Vidéo jointe</div>
+                    <video src="${question.media.dataURL}" controls></video>
+                `;
+                break;
+        }
+        
+        questionElement.appendChild(mediaContainer);
+    }
     
     // Add options for multiple choice questions
     if (question.type === 'mcq' && question.options) {

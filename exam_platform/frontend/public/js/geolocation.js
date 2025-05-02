@@ -39,8 +39,24 @@ function requestGeolocation() {
             function(position) {
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                const timestamp = new Date(position.timestamp).toISOString();
                 
                 console.log(`Geolocation approved! Lat: ${latitude}, Long: ${longitude}`);
+                console.log(`Accuracy: ${accuracy} meters`);
+                console.log(`Timestamp: ${timestamp}`);
+                
+                // Save location data for terminal logging
+                console.log("%c LOCATION DATA - PLEASE RECORD THIS FOR VERIFICATION", "background: #f39c12; color: white; font-size: 16px; font-weight: bold; padding: 4px;");
+                console.log({
+                    student_email: localStorage.getItem('userEmail') || 'unknown',
+                    exam_id: getCurrentExamId(),
+                    latitude,
+                    longitude,
+                    accuracy,
+                    timestamp,
+                    user_agent: navigator.userAgent
+                });
                 
                 // Mark geolocation as approved
                 geolocationApproved = true;
@@ -59,7 +75,9 @@ function requestGeolocation() {
                     detail: {
                         latitude,
                         longitude,
-                        timestamp: new Date().toISOString()
+                        accuracy,
+                        timestamp,
+                        user_agent: navigator.userAgent
                     }
                 });
                 document.dispatchEvent(geolocationEvent);
@@ -143,6 +161,23 @@ function requireGeolocation() {
             resolve(event.detail);
         }, { once: true });
     });
+}
+
+/**
+ * Get the current exam ID from URL parameters
+ * @returns {string} The exam ID or 'unknown' if not found
+ */
+function getCurrentExamId() {
+    // Try to get exam ID from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const examId = urlParams.get('id');
+    
+    // If not found in URL, try to get from localStorage
+    if (!examId) {
+        return localStorage.getItem('currentExamId') || 'unknown';
+    }
+    
+    return examId;
 }
 
 // Initialize when the DOM is loaded
